@@ -1,0 +1,27 @@
+{
+    "compilerOptions": {
+        "outDir": "dist",
+        "rootDir": "src",
+        "module": "es6",
+        "target": "es5",
+        "downlevelIteration": true,
+        "moduleResolution": "node",
+        "allowUnreachableCode": true,
+        "declaration": true,
+        "experimentalDecorators": true,
+        "noImplicitAny": true,
+        "noImplicitReturns": true,
+        "noImplicitThis": true,
+        "noUnusedLocals": false,
+        "noUnusedParameters": true,
+        "pretty": true,
+        "skipLibCheck": true,
+        "sourceMap": false,
+        "strictNullChecks": true,
+        "suppressImplicitAnyIndexErrors": true,
+        "lib": [
+            "es5",
+            "es6"
+        ]
+    }
+}

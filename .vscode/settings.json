@@ -1,0 +1,11 @@
+{
+    "files.exclude": {
+        "**/.cache-loader": true
+    },
+    "search.exclude": {
+        "**/.vscode": true,
+        "**/dist": true,
+        "**/yarn.lock": true
+    },
+    "typescript.tsdk": "node_modules/typescript/lib"
+}
