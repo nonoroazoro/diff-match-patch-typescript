@@ -2,8 +2,9 @@
     "name": "diff-match-patch-ts",
     "version": "1.0.0",
     "description": "Port diff-match-patch to TypeScript.",
-    "main": "dist/index",
     "license": "MIT",
+    "main": "dist/lib/index.js",
+    "module": "dist/es/index.js",
     "author": {
         "email": "xiaochao.k@gmail.com",
         "name": "nonoroazoro",
