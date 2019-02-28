@@ -6,8 +6,8 @@ import { Diff, DiffOperation } from "../types";
 export class PatchObject
 {
     public diffs: Diff[] = [];
-    public start1: number;
-    public start2: number;
+    public start1: number = 0; // TODO: Need to double check the default value 0
+    public start2: number = 0; // TODO: Need to double check the default value 0
     public length1: number = 0;
     public length2: number = 0;
 
