@@ -1,5 +1,7 @@
 /**
- * The data structure representing a diff is an array of tuples:
+ * Represents the operations of a `Diff`.
+ *
+ * The data structure representing a `Diff` is an array of tuples:
  * [[DIFF_DELETE, 'Hello'], [DIFF_INSERT, 'Goodbye'], [DIFF_EQUAL, ' world.']]
  * which means: delete 'Hello', add 'Goodbye' and keep ' world.'
  */
