@@ -310,7 +310,7 @@ export class DiffMatchPatch
      * @param {number} deadline Time at which to bail if not yet complete.
      * @returns {Diff[]} Array of diff tuples.
      */
-    private diff_bisect_(text1: string, text2: string, deadline: number)
+    private diff_bisect_(text1: string, text2: string, deadline: number): Diff[]
     {
         // Cache the text lengths to prevent multiple calls.
         const text1_length = text1.length;
@@ -456,5 +456,37 @@ export class DiffMatchPatch
             [DiffOperation.DIFF_DELETE, text1],
             [DiffOperation.DIFF_INSERT, text2]
         ];
+    }
+
+    /**
+     * Given the location of the 'middle snake', split the diff in two parts
+     * and recurse.
+     *
+     * @private
+     * @param {string} text1 Old string to be diffed.
+     * @param {string} text2 New string to be diffed.
+     * @param {number} x Index of split point in text1.
+     * @param {number} y Index of split point in text2.
+     * @param {number} deadline Time at which to bail if not yet complete.
+     * @return {Diff[]} Array of diff tuples.
+     */
+    private diff_bisectSplit_(
+        text1: string,
+        text2: string,
+        x: number,
+        y: number,
+        deadline: number
+    ): Diff[]
+    {
+        const text1A = text1.substring(0, x);
+        const text2A = text2.substring(0, y);
+        const text1B = text1.substring(x);
+        const text2B = text2.substring(y);
+
+        // Compute both diffs serially.
+        const diffsA = this.diff_main(text1A, text2A, false, deadline);
+        const diffsB = this.diff_main(text1B, text2B, false, deadline);
+
+        return diffsA.concat(diffsB);
     }
 }
