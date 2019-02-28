@@ -767,10 +767,10 @@ export class DiffMatchPatch
     public diff_prettyHtml(diffs: Diff[]): string
     {
         const html = [];
-        let pattern_amp = /&/g;
-        let pattern_lt = /</g;
-        let pattern_gt = />/g;
-        let pattern_para = /\n/g;
+        const pattern_amp = /&/g;
+        const pattern_lt = /</g;
+        const pattern_gt = />/g;
+        const pattern_para = /\n/g;
         for (let x = 0; x < diffs.length; x++)
         {
             const op = diffs[x][0];    // Operation (insert, delete, equal)
@@ -801,7 +801,7 @@ export class DiffMatchPatch
      * @param {Diff[]} diffs Array of diff tuples.
      * @return {string} Source text.
      */
-    public diff_text1(diffs: Diff[])
+    public diff_text1(diffs: Diff[]): string
     {
         const text = [];
         for (let x = 0; x < diffs.length; x++)
@@ -820,7 +820,7 @@ export class DiffMatchPatch
      * @param {Diff[]} diffs Array of diff tuples.
      * @return {string} Destination text.
      */
-    public diff_text2(diffs: Diff[])
+    public diff_text2(diffs: Diff[]): string
     {
         const text = [];
         for (let x = 0; x < diffs.length; x++)
@@ -831,6 +831,42 @@ export class DiffMatchPatch
             }
         }
         return text.join("");
+    }
+
+    /**
+     * Compute the Levenshtein distance; the number of inserted, deleted or
+     * substituted characters.
+     *
+     * @param {Diff[]} diffs Array of diff tuples.
+     * @returns {number} Number of changes.
+     */
+    public diff_levenshtein(diffs: Diff[]): number
+    {
+        let levenshtein = 0;
+        let insertions = 0;
+        let deletions = 0;
+        for (let x = 0; x < diffs.length; x++)
+        {
+            const op = diffs[x][0];
+            const data = diffs[x][1];
+            switch (op)
+            {
+                case DiffOperation.DIFF_INSERT:
+                    insertions += data.length;
+                    break;
+                case DiffOperation.DIFF_DELETE:
+                    deletions += data.length;
+                    break;
+                case DiffOperation.DIFF_EQUAL:
+                    // A deletion and an insertion is one substitution.
+                    levenshtein += math.max(insertions, deletions);
+                    insertions = 0;
+                    deletions = 0;
+                    break;
+            }
+        }
+        levenshtein += math.max(insertions, deletions);
+        return levenshtein;
     }
 
     /**
