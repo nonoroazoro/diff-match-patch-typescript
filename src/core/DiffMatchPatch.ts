@@ -46,30 +46,30 @@ export class DiffMatchPatch
     // Redefine these in your program to override the defaults.
 
     // Number of seconds to map a diff before giving up (0 for infinity).
-    private Diff_Timeout = 1.0;
+    public Diff_Timeout = 1.0;
 
     // Cost of an empty edit operation in terms of edit characters.
-    private Diff_EditCost = 4;
+    public Diff_EditCost = 4;
 
     // At what point is no match declared (0.0 = perfection, 1.0 = very loose).
-    private Match_Threshold = 0.5;
+    public Match_Threshold = 0.5;
 
     // How far to search for a match (0 = exact location, 1000+ = broad match).
     // A match this many characters away from the expected location will add
     // 1.0 to the score (0.0 is a perfect match).
-    private Match_Distance = 1000;
+    public Match_Distance = 1000;
 
     // When deleting a large block of text (over ~64 characters), how close do
     // the contents have to be to match the expected contents. (0.0 = perfection,
     // 1.0 = very loose). Note that Match_Threshold controls how closely the
     // end points of a delete need to match.
-    private Patch_DeleteThreshold = 0.5;
+    public Patch_DeleteThreshold = 0.5;
 
     // Chunk size for context length.
-    private Patch_Margin = 4;
+    public Patch_Margin = 4;
 
     // The number of bits in an int.
-    private Match_MaxBits = 32;
+    public Match_MaxBits = 32;
 
     //#region DIFF FUNCTIONS (public)
     /**
