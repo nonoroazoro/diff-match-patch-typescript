@@ -5,10 +5,10 @@ import
     linebreakRegex_,
     nonAlphaNumericRegex_,
     whitespaceRegex_
-} from "./constants";
-import { PatchObject } from "./core/PatchObject";
-import { Diff, DiffOperation, HalfMatchArray } from "./types";
-import * as math from "./utils/math";
+} from "../constants";
+import { PatchObject } from "../core/PatchObject";
+import { Diff, DiffOperation, HalfMatchArray } from "../types";
+import * as math from "../utils/math";
 
 /**
  * Diff Match and Patch
