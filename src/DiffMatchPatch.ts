@@ -1,4 +1,4 @@
-import { Diff, DiffOperation } from "./types";
+import { Diff, DiffOperation, HalfMatchArray } from "./types";
 
 /**
  * Diff Match and Patch
@@ -733,5 +733,139 @@ export class DiffMatchPatch
                 length++;
             }
         }
+    }
+
+    /**
+     * Do the two texts share a substring which is at least half the length of the
+     * longer text?
+     * This speedup can produce non-minimal diffs.
+     *
+     * @private
+     * @param {string} text1 First string.
+     * @param {string} text2 Second string.
+     * @returns {(HalfMatchArray | null)} Five element Array, containing the prefix of
+     * text1, the suffix of text1, the prefix of text2, the suffix of
+     * text2 and the common middle.  Or null if there was no match.
+     */
+    private diff_halfMatch_(text1: string, text2: string): HalfMatchArray | null
+    {
+        if (this.Diff_Timeout <= 0)
+        {
+            // Don't risk returning a non-optimal diff if we have unlimited time.
+            return null;
+        }
+        const longtext = text1.length > text2.length ? text1 : text2;
+        const shorttext = text1.length > text2.length ? text2 : text1;
+        if (longtext.length < 4 || shorttext.length * 2 < longtext.length)
+        {
+            return null;  // Pointless.
+        }
+
+        // First check if the second quarter is the seed for a half-match.
+        const hm1 = this.diff_halfMatchI_(longtext, shorttext, Math.ceil(longtext.length / 4));
+        // Check again based on the third quarter.
+        const hm2 = this.diff_halfMatchI_(longtext, shorttext, Math.ceil(longtext.length / 2));
+        let hm: HalfMatchArray | null;
+        if (!hm1 && !hm2)
+        {
+            return null;
+        }
+        else if (!hm2)
+        {
+            hm = hm1!;
+        }
+        else if (!hm1)
+        {
+            hm = hm2;
+        }
+        else
+        {
+            // Both matched.  Select the longest.
+            hm = hm1[4].length > hm2[4].length ? hm1 : hm2;
+        }
+
+        // A half-match was found, sort out the return data.
+        let text1_a: string;
+        let text1_b: string;
+        let text2_a: string;
+        let text2_b: string;
+        const mid_common: string = hm[4];
+        if (text1.length > text2.length)
+        {
+            text1_a = hm[0];
+            text1_b = hm[1];
+            text2_a = hm[2];
+            text2_b = hm[3];
+        }
+        else
+        {
+            text2_a = hm[0];
+            text2_b = hm[1];
+            text1_a = hm[2];
+            text1_b = hm[3];
+        }
+        return [text1_a, text1_b, text2_a, text2_b, mid_common];
+    }
+
+    /**
+     * Does a substring of shorttext exist within longtext such that the substring
+     * is at least half the length of longtext?
+     * Closure, but does not reference any external variables.
+     *
+     * @private
+     * @param {string} longtext Longer string.
+     * @param {string} shorttext Shorter string.
+     * @param {number} i Start index of quarter length substring within longtext.
+     * @return {(HalfMatchArray | null)} Five element Array, containing the prefix of
+     * longtext, the suffix of longtext, the prefix of shorttext, the suffix
+     * of shorttext and the common middle.  Or null if there was no match.
+     */
+    private diff_halfMatchI_(longtext: string, shorttext: string, i: number): HalfMatchArray | null
+    {
+        // Start with a 1/4 length substring at position i as a seed.
+        const seed = longtext.substring(i, i + Math.floor(longtext.length / 4));
+        let best_common = "";
+        let best_longtext_a: string;
+        let best_longtext_b: string;
+        let best_shorttext_a: string;
+        let best_shorttext_b: string;
+
+        // Initial.
+        let j = shorttext.indexOf(seed, 0);
+        while (j !== -1)
+        {
+            const prefixLength = this.diff_commonPrefix(
+                longtext.substring(i),
+                shorttext.substring(j)
+            );
+            const suffixLength = this.diff_commonSuffix(
+                longtext.substring(0, i),
+                shorttext.substring(0, j)
+            );
+            if (best_common.length < suffixLength + prefixLength)
+            {
+                best_common = shorttext.substring(j - suffixLength, j)
+                    + shorttext.substring(j, j + prefixLength);
+                best_longtext_a = longtext.substring(0, i - suffixLength);
+                best_longtext_b = longtext.substring(i + prefixLength);
+                best_shorttext_a = shorttext.substring(0, j - suffixLength);
+                best_shorttext_b = shorttext.substring(j + prefixLength);
+            }
+
+            // Step.
+            j = shorttext.indexOf(seed, j + 1);
+        }
+
+        if (best_common.length * 2 >= longtext.length)
+        {
+            return [
+                best_longtext_a!,
+                best_longtext_b!,
+                best_shorttext_a!,
+                best_shorttext_b!,
+                best_common
+            ];
+        }
+        return null;
     }
 }
