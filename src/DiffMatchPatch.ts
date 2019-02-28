@@ -331,7 +331,7 @@ export class DiffMatchPatch
                     if (overlap_length1 >= deletion.length / 2 ||
                         overlap_length1 >= insertion.length / 2)
                     {
-                        // Overlap found.  Insert an equality and trim the surrounding edits.
+                        // Overlap found. Insert an equality and trim the surrounding edits.
                         diffs.splice(
                             pointer,
                             0,
@@ -554,6 +554,161 @@ export class DiffMatchPatch
             pointer++;
         }
 
+        if (changes)
+        {
+            this.diff_cleanupMerge(diffs);
+        }
+    }
+
+    /**
+     * Reorder and merge like edit sections. Merge equalities.
+     * Any edit section can move as long as it doesn't cross an equality.
+     *
+     * @param {Diff[]} diffs Array of diff tuples.
+     */
+    public diff_cleanupMerge(diffs: Diff[]): void
+    {
+        // Add a dummy entry at the end.
+        diffs.push([DiffOperation.DIFF_EQUAL, ""]);
+
+        let pointer = 0;
+        let count_delete = 0;
+        let count_insert = 0;
+        let text_delete = "";
+        let text_insert = "";
+        let commonlength: number;
+        while (pointer < diffs.length)
+        {
+            switch (diffs[pointer][0])
+            {
+                case DiffOperation.DIFF_INSERT:
+                    count_insert++;
+                    text_insert += diffs[pointer][1];
+                    pointer++;
+                    break;
+                case DiffOperation.DIFF_DELETE:
+                    count_delete++;
+                    text_delete += diffs[pointer][1];
+                    pointer++;
+                    break;
+                case DiffOperation.DIFF_EQUAL:
+                    // Upon reaching an equality, check for prior redundancies.
+                    if (count_delete + count_insert > 1)
+                    {
+                        if (count_delete !== 0 && count_insert !== 0)
+                        {
+                            // Factor out any common prefixes.
+                            commonlength = this.diff_commonPrefix(text_insert, text_delete);
+                            if (commonlength !== 0)
+                            {
+                                if ((pointer - count_delete - count_insert) > 0 &&
+                                    (
+                                        diffs[pointer - count_delete - count_insert - 1][0]
+                                        === DiffOperation.DIFF_EQUAL
+                                    )
+                                )
+                                {
+                                    diffs[pointer - count_delete - count_insert - 1][1]
+                                        += text_insert.substring(0, commonlength);
+                                }
+                                else
+                                {
+                                    diffs.splice(
+                                        0,
+                                        0,
+                                        [DiffOperation.DIFF_EQUAL, text_insert.substring(0, commonlength)]
+                                    );
+                                    pointer++;
+                                }
+                                text_insert = text_insert.substring(commonlength);
+                                text_delete = text_delete.substring(commonlength);
+                            }
+                            // Factor out any common suffixes.
+                            commonlength = this.diff_commonSuffix(text_insert, text_delete);
+                            if (commonlength !== 0)
+                            {
+                                diffs[pointer][1] = text_insert.substring(text_insert.length
+                                    - commonlength) + diffs[pointer][1];
+                                text_insert = text_insert.substring(0, text_insert.length - commonlength);
+                                text_delete = text_delete.substring(0, text_delete.length - commonlength);
+                            }
+                        }
+                        // Delete the offending records and add the merged ones.
+                        pointer -= count_delete + count_insert;
+                        diffs.splice(pointer, count_delete + count_insert);
+                        if (text_delete.length)
+                        {
+                            diffs.splice(pointer, 0, [DiffOperation.DIFF_DELETE, text_delete]);
+                            pointer++;
+                        }
+                        if (text_insert.length)
+                        {
+                            diffs.splice(pointer, 0, [DiffOperation.DIFF_INSERT, text_insert]);
+                            pointer++;
+                        }
+                        pointer++;
+                    }
+                    else if (pointer !== 0 && diffs[pointer - 1][0] === DiffOperation.DIFF_EQUAL)
+                    {
+                        // Merge this equality with the previous one.
+                        diffs[pointer - 1][1] += diffs[pointer][1];
+                        diffs.splice(pointer, 1);
+                    }
+                    else
+                    {
+                        pointer++;
+                    }
+                    count_insert = 0;
+                    count_delete = 0;
+                    text_delete = "";
+                    text_insert = "";
+                    break;
+            }
+        }
+        if (diffs[diffs.length - 1][1] === "")
+        {
+            diffs.pop();  // Remove the dummy entry at the end.
+        }
+
+        // Second pass: look for single edits surrounded on both sides by equalities
+        // which can be shifted sideways to eliminate an equality.
+        // e.g: A<ins>BA</ins>C -> <ins>AB</ins>AC
+        let changes = false;
+        pointer = 1;
+        // Intentionally ignore the first and last element (don't need checking).
+        while (pointer < diffs.length - 1)
+        {
+            if (diffs[pointer - 1][0] === DiffOperation.DIFF_EQUAL &&
+                diffs[pointer + 1][0] === DiffOperation.DIFF_EQUAL)
+            {
+                // This is a single edit surrounded by equalities.
+                if (diffs[pointer][1].substring(diffs[pointer][1].length - diffs[pointer - 1][1].length)
+                    === diffs[pointer - 1][1])
+                {
+                    // Shift the edit over the previous equality.
+                    diffs[pointer][1] = diffs[pointer - 1][1]
+                        + diffs[pointer][1].substring(
+                            0,
+                            diffs[pointer][1].length - diffs[pointer - 1][1].length
+                        );
+                    diffs[pointer + 1][1] = diffs[pointer - 1][1] + diffs[pointer + 1][1];
+                    diffs.splice(pointer - 1, 1);
+                    changes = true;
+                }
+                else if (diffs[pointer][1].substring(0, diffs[pointer + 1][1].length)
+                    === diffs[pointer + 1][1])
+                {
+                    // Shift the edit over the next equality.
+                    diffs[pointer - 1][1] += diffs[pointer + 1][1];
+                    diffs[pointer][1] = diffs[pointer][1].substring(diffs[pointer + 1][1].length)
+                        + diffs[pointer + 1][1];
+                    diffs.splice(pointer + 1, 1);
+                    changes = true;
+                }
+            }
+            pointer++;
+        }
+        // If shifts were made, the diff needs reordering and another shift sweep.
         if (changes)
         {
             this.diff_cleanupMerge(diffs);
@@ -1086,7 +1241,7 @@ export class DiffMatchPatch
      * @param {string} text2 Second string.
      * @returns {(HalfMatchArray | null)} Five element Array, containing the prefix of
      * text1, the suffix of text1, the prefix of text2, the suffix of
-     * text2 and the common middle.  Or null if there was no match.
+     * text2 and the common middle. Or null if there was no match.
      */
     private diff_halfMatch_(text1: string, text2: string): HalfMatchArray | null
     {
@@ -1121,7 +1276,7 @@ export class DiffMatchPatch
         }
         else
         {
-            // Both matched.  Select the longest.
+            // Both matched. Select the longest.
             hm = hm1[4].length > hm2[4].length ? hm1 : hm2;
         }
 
@@ -1159,7 +1314,7 @@ export class DiffMatchPatch
      * @param {number} i Start index of quarter length substring within longtext.
      * @returns {(HalfMatchArray | null)} Five element Array, containing the prefix of
      * longtext, the suffix of longtext, the prefix of shorttext, the suffix
-     * of shorttext and the common middle.  Or null if there was no match.
+     * of shorttext and the common middle. Or null if there was no match.
      */
     private diff_halfMatchI_(longtext: string, shorttext: string, i: number): HalfMatchArray | null
     {
@@ -1231,7 +1386,7 @@ export class DiffMatchPatch
 
         // Each port of this function behaves slightly differently due to
         // subtle differences in each language's definition of things like
-        // 'whitespace'.  Since this function's purpose is largely cosmetic,
+        // 'whitespace'. Since this function's purpose is largely cosmetic,
         // the choice has been made to use each language's native features
         // rather than force total conformity.
         const char1 = one.charAt(one.length - 1);
