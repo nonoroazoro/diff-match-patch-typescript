@@ -716,6 +716,49 @@ export class DiffMatchPatch
     }
 
     /**
+     * loc is a location in text1, compute and return the equivalent location in
+     * text2.
+     * e.g. 'The cat' vs 'The big cat', 1->1, 5->8
+     *
+     * @param {Diff[]} diffs Array of diff tuples.
+     * @param {number} loc Location within text1.
+     * @returns {number} Location within text2.
+     */
+    public diff_xIndex(diffs: Diff[], loc: number): number
+    {
+        let chars1 = 0;
+        let chars2 = 0;
+        let last_chars1 = 0;
+        let last_chars2 = 0;
+        let x;
+        for (x = 0; x < diffs.length; x++)
+        {
+            if (diffs[x][0] !== DiffOperation.DIFF_INSERT)
+            {  // Equality or deletion.
+                chars1 += diffs[x][1].length;
+            }
+            if (diffs[x][0] !== DiffOperation.DIFF_DELETE)
+            {  // Equality or insertion.
+                chars2 += diffs[x][1].length;
+            }
+            if (chars1 > loc)
+            {  // Overshot the location.
+                break;
+            }
+            last_chars1 = chars1;
+            last_chars2 = chars2;
+        }
+        // Was the location was deleted?
+        if (diffs.length !== x &&
+            diffs[x][0] === DiffOperation.DIFF_DELETE)
+        {
+            return last_chars2;
+        }
+        // Add the remaining character length.
+        return last_chars2 + (loc - last_chars1);
+    }
+
+    /**
      * Find the differences between two texts. Assumes that the texts do not
      * have any common prefix or suffix.
      *
