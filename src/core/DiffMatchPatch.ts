@@ -1344,6 +1344,74 @@ export class DiffMatchPatch
         text = text.substring(nullPadding.length, text.length - nullPadding.length);
         return [text, results];
     }
+
+    /**
+     * Add some padding on text start and end so that edges can match something.
+     * Intended to be called only from within patch_apply.
+     *
+     * @param {PatchObject[]} patches Array of Patch objects.
+     * @returns {string} The padding string added to each side.
+     */
+    public patch_addPadding(patches: PatchObject[]): string
+    {
+        const paddingLength = this.Patch_Margin;
+        let nullPadding = "";
+        for (let x = 1; x <= paddingLength; x++)
+        {
+            nullPadding += String.fromCharCode(x);
+        }
+
+        // Bump all the patches forward.
+        for (let x = 0; x < patches.length; x++)
+        {
+            patches[x].start1 += paddingLength;
+            patches[x].start2 += paddingLength;
+        }
+
+        // Add some padding on start of first diff.
+        let patch = patches[0];
+        let diffs = patch.diffs;
+        if (diffs.length === 0 || diffs[0][0] !== DiffOperation.DIFF_EQUAL)
+        {
+            // Add nullPadding equality.
+            diffs.unshift([DiffOperation.DIFF_EQUAL, nullPadding]);
+            patch.start1 -= paddingLength;  // Should be 0.
+            patch.start2 -= paddingLength;  // Should be 0.
+            patch.length1 += paddingLength;
+            patch.length2 += paddingLength;
+        }
+        else if (paddingLength > diffs[0][1].length)
+        {
+            // Grow first equality.
+            const extraLength = paddingLength - diffs[0][1].length;
+            diffs[0][1] = nullPadding.substring(diffs[0][1].length) + diffs[0][1];
+            patch.start1 -= extraLength;
+            patch.start2 -= extraLength;
+            patch.length1 += extraLength;
+            patch.length2 += extraLength;
+        }
+
+        // Add some padding on end of last diff.
+        patch = patches[patches.length - 1];
+        diffs = patch.diffs;
+        if (diffs.length === 0 || diffs[diffs.length - 1][0] !== DiffOperation.DIFF_EQUAL)
+        {
+            // Add nullPadding equality.
+            diffs.push([DiffOperation.DIFF_EQUAL, nullPadding]);
+            patch.length1 += paddingLength;
+            patch.length2 += paddingLength;
+        }
+        else if (paddingLength > diffs[diffs.length - 1][1].length)
+        {
+            // Grow last equality.
+            const extraLength = paddingLength - diffs[diffs.length - 1][1].length;
+            diffs[diffs.length - 1][1] += nullPadding.substring(0, extraLength);
+            patch.length1 += extraLength;
+            patch.length2 += extraLength;
+        }
+
+        return nullPadding;
+    }
     //#endregion PATCH FUNCTIONS (public)
 
     //#region DIFF FUNCTIONS (private)
