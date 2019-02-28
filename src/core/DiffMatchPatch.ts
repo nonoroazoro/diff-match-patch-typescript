@@ -1412,6 +1412,121 @@ export class DiffMatchPatch
 
         return nullPadding;
     }
+
+    /**
+     * Look through the patches and break up any which are longer than the maximum
+     * limit of the match algorithm.
+     * Intended to be called only from within patch_apply.
+     *
+     * @param {PatchObject[]} patches Array of Patch objects.
+     */
+    public patch_splitMax(patches: PatchObject[]): void
+    {
+        const patch_size = this.Match_MaxBits;
+        for (let x = 0; x < patches.length; x++)
+        {
+            if (patches[x].length1 <= patch_size)
+            {
+                continue;
+            }
+            const bigpatch = patches[x];
+            // Remove the big old patch.
+            patches.splice(x--, 1);
+            let start1 = bigpatch.start1;
+            let start2 = bigpatch.start2;
+            let precontext = "";
+            while (bigpatch.diffs.length !== 0)
+            {
+                // Create one of several smaller patches.
+                const patch = new PatchObject();
+                let empty = true;
+                patch.start1 = start1 - precontext.length;
+                patch.start2 = start2 - precontext.length;
+                if (precontext !== "")
+                {
+                    patch.length1 = patch.length2 = precontext.length;
+                    patch.diffs.push([DiffOperation.DIFF_EQUAL, precontext]);
+                }
+                while (bigpatch.diffs.length !== 0 &&
+                    patch.length1 < patch_size - this.Patch_Margin)
+                {
+                    const diff_type = bigpatch.diffs[0][0];
+                    let diff_text = bigpatch.diffs[0][1];
+                    if (diff_type === DiffOperation.DIFF_INSERT)
+                    {
+                        // Insertions are harmless.
+                        patch.length2 += diff_text.length;
+                        start2 += diff_text.length;
+                        patch.diffs.push(bigpatch.diffs.shift()!);
+                        empty = false;
+                    }
+                    else if (diff_type === DiffOperation.DIFF_DELETE &&
+                        patch.diffs.length === 1 &&
+                        patch.diffs[0][0] === DiffOperation.DIFF_EQUAL &&
+                        diff_text.length > 2 * patch_size)
+                    {
+                        // This is a large deletion.  Let it pass in one chunk.
+                        patch.length1 += diff_text.length;
+                        start1 += diff_text.length;
+                        empty = false;
+                        patch.diffs.push([diff_type, diff_text]);
+                        bigpatch.diffs.shift();
+                    }
+                    else
+                    {
+                        // Deletion or equality.  Only take as much as we can stomach.
+                        diff_text = diff_text.substring(
+                            0,
+                            patch_size - patch.length1 - this.Patch_Margin
+                        );
+                        patch.length1 += diff_text.length;
+                        start1 += diff_text.length;
+                        if (diff_type === DiffOperation.DIFF_EQUAL)
+                        {
+                            patch.length2 += diff_text.length;
+                            start2 += diff_text.length;
+                        }
+                        else
+                        {
+                            empty = false;
+                        }
+                        patch.diffs.push([diff_type, diff_text]);
+                        if (diff_text === bigpatch.diffs[0][1])
+                        {
+                            bigpatch.diffs.shift();
+                        }
+                        else
+                        {
+                            bigpatch.diffs[0][1] = bigpatch.diffs[0][1].substring(diff_text.length);
+                        }
+                    }
+                }
+                // Compute the head context for the next patch.
+                precontext = this.diff_text2(patch.diffs);
+                precontext = precontext.substring(precontext.length - this.Patch_Margin);
+                // Append the end context for this patch.
+                const postcontext = this.diff_text1(bigpatch.diffs).substring(0, this.Patch_Margin);
+                if (postcontext !== "")
+                {
+                    patch.length1 += postcontext.length;
+                    patch.length2 += postcontext.length;
+                    if (patch.diffs.length !== 0 &&
+                        patch.diffs[patch.diffs.length - 1][0] === DiffOperation.DIFF_EQUAL)
+                    {
+                        patch.diffs[patch.diffs.length - 1][1] += postcontext;
+                    }
+                    else
+                    {
+                        patch.diffs.push([DiffOperation.DIFF_EQUAL, postcontext]);
+                    }
+                }
+                if (!empty)
+                {
+                    patches.splice(++x, 0, patch);
+                }
+            }
+        }
+    }
     //#endregion PATCH FUNCTIONS (public)
 
     //#region DIFF FUNCTIONS (private)
