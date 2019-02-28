@@ -1311,7 +1311,8 @@ export class DiffMatchPatch
                     {
                         this.diff_cleanupSemanticLossless(diffs);
                         let index1 = 0;
-                        let index2;
+                        // TODO: Double check the index2's initial value 0.
+                        let index2 = 0;
                         for (let y = 0; y < patches[x].diffs.length; y++)
                         {
                             const mod = patches[x].diffs[y];
