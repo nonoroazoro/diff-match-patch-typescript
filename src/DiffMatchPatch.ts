@@ -450,6 +450,117 @@ export class DiffMatchPatch
     }
 
     /**
+     * Reduce the number of edits by eliminating operationally trivial equalities.
+     *
+     * @param {Diff[]} diffs Array of diff tuples.
+     */
+    public diff_cleanupEfficiency(diffs: Diff[]): void
+    {
+        let changes = false;
+        const equalities = [];  // Stack of indices where equalities are found.
+        let equalitiesLength = 0;  // Keeping our own length var is faster in JS.
+        let lastEquality: string | null = null;
+
+        // Always equal to diffs[equalities[equalitiesLength - 1]][1]
+        let pointer = 0;  // Index of current position.
+
+        // Is there an insertion operation before the last equality.
+        let pre_ins = false;
+
+        // Is there a deletion operation before the last equality.
+        let pre_del = false;
+
+        // Is there an insertion operation after the last equality.
+        let post_ins = false;
+
+        // Is there a deletion operation after the last equality.
+        let post_del = false;
+        while (pointer < diffs.length)
+        {
+            if (diffs[pointer][0] === DiffOperation.DIFF_EQUAL)
+            {
+                // Equality found.
+                if (diffs[pointer][1].length < this.Diff_EditCost &&
+                    (post_ins || post_del))
+                {
+                    // Candidate found.
+                    equalities[equalitiesLength++] = pointer;
+                    pre_ins = post_ins;
+                    pre_del = post_del;
+                    lastEquality = diffs[pointer][1];
+                }
+                else
+                {
+                    // Not a candidate, and can never become one.
+                    equalitiesLength = 0;
+                    lastEquality = null;
+                }
+                post_ins = post_del = false;
+            }
+            else
+            {
+                // An insertion or deletion.
+                if (diffs[pointer][0] === DiffOperation.DIFF_DELETE)
+                {
+                    post_del = true;
+                }
+                else
+                {
+                    post_ins = true;
+                }
+                /*
+                 * Five types to be split:
+                 * <ins>A</ins><del>B</del>XY<ins>C</ins><del>D</del>
+                 * <ins>A</ins>X<ins>C</ins><del>D</del>
+                 * <ins>A</ins><del>B</del>X<ins>C</ins>
+                 * <ins>A</del>X<ins>C</ins><del>D</del>
+                 * <ins>A</ins><del>B</del>X<del>C</del>
+                 */
+                if (lastEquality &&
+                    (
+                        (pre_ins && pre_del && post_ins && post_del) ||
+                        (
+                            (lastEquality.length < this.Diff_EditCost / 2) &&
+                            (Number(pre_ins) + Number(pre_del) + Number(post_ins) + Number(post_del)) === 3
+                        )
+                    )
+                )
+                {
+                    // Duplicate record.
+                    diffs.splice(
+                        equalities[equalitiesLength - 1],
+                        0,
+                        [DiffOperation.DIFF_DELETE, lastEquality]
+                    );
+                    // Change second copy to insert.
+                    diffs[equalities[equalitiesLength - 1] + 1][0] = DiffOperation.DIFF_INSERT;
+                    equalitiesLength--;  // Throw away the equality we just deleted;
+                    lastEquality = null;
+                    if (pre_ins && pre_del)
+                    {
+                        // No changes made which could affect previous entry, keep going.
+                        post_ins = post_del = true;
+                        equalitiesLength = 0;
+                    }
+                    else
+                    {
+                        equalitiesLength--;  // Throw away the previous equality.
+                        pointer = equalitiesLength > 0 ? equalities[equalitiesLength - 1] : -1;
+                        post_ins = post_del = false;
+                    }
+                    changes = true;
+                }
+            }
+            pointer++;
+        }
+
+        if (changes)
+        {
+            this.diff_cleanupMerge(diffs);
+        }
+    }
+
+    /**
      * Find the differences between two texts. Assumes that the texts do not
      * have any common prefix or suffix.
      *
