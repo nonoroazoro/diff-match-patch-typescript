@@ -759,6 +759,43 @@ export class DiffMatchPatch
     }
 
     /**
+     * Convert a diff array into a pretty HTML report.
+     *
+     * @param {Diff[]>} diffs Array of diff tuples.
+     * @returns {string} HTML representation.
+     */
+    public diff_prettyHtml(diffs: Diff[]): string
+    {
+        const html = [];
+        let pattern_amp = /&/g;
+        let pattern_lt = /</g;
+        let pattern_gt = />/g;
+        let pattern_para = /\n/g;
+        for (let x = 0; x < diffs.length; x++)
+        {
+            const op = diffs[x][0];    // Operation (insert, delete, equal)
+            const data = diffs[x][1];  // Text of change.
+            const text = data.replace(pattern_amp, "&amp;")
+                .replace(pattern_lt, "&lt;")
+                .replace(pattern_gt, "&gt;")
+                .replace(pattern_para, "&para;<br>");
+            switch (op)
+            {
+                case DiffOperation.DIFF_INSERT:
+                    html[x] = '<ins style="background:#e6ffe6;">' + text + "</ins>";
+                    break;
+                case DiffOperation.DIFF_DELETE:
+                    html[x] = '<del style="background:#ffe6e6;">' + text + "</del>";
+                    break;
+                case DiffOperation.DIFF_EQUAL:
+                    html[x] = "<span>" + text + "</span>";
+                    break;
+            }
+        }
+        return html.join("");
+    }
+
+    /**
      * Find the differences between two texts. Assumes that the texts do not
      * have any common prefix or suffix.
      *
