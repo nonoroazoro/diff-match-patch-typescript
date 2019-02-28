@@ -3,7 +3,7 @@
  * [[DIFF_DELETE, 'Hello'], [DIFF_INSERT, 'Goodbye'], [DIFF_EQUAL, ' world.']]
  * which means: delete 'Hello', add 'Goodbye' and keep ' world.'
  */
-export enum DiffAction
+export enum DiffOperation
 {
     DIFF_DELETE = -1,
     DIFF_INSERT = 1,
