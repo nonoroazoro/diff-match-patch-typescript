@@ -75,7 +75,7 @@ export class DiffMatchPatch
      * instead.
      * @returns {Diff[]} Array of diff tuples.
      */
-    public diff_main(text1: string, text2: string, opt_checklines: boolean, opt_deadline: number)
+    public diff_main(text1: string, text2: string, opt_checklines: boolean, opt_deadline: number): Diff[]
     {
         // Set a deadline by which time the diff must be complete.
         if (typeof opt_deadline === "undefined")
@@ -153,7 +153,7 @@ export class DiffMatchPatch
      * @param {number} deadline Time when the diff should be complete by.
      * @returns {Diff[]} Array of diff tuples.
      */
-    private diff_compute_(text1: string, text2: string, checklines: boolean, deadline: number)
+    private diff_compute_(text1: string, text2: string, checklines: boolean, deadline: number): Diff[]
     {
         let diffs: Diff[];
 
@@ -222,5 +222,79 @@ export class DiffMatchPatch
         }
 
         return this.diff_bisect_(text1, text2, deadline);
+    }
+
+    /**
+     * Do a quick line-level diff on both strings, then re-diff the parts for
+     * greater accuracy.
+     * This speedup can produce non-minimal diffs.
+     *
+     * @private
+     * @param {string} text1 Old string to be diffed.
+     * @param {string} text2 New string to be diffed.
+     * @param {number} deadline Time when the diff should be complete by.
+     * @returns {Diff[]} Array of diff tuples.
+     */
+    private diff_lineMode_(text1: string, text2: string, deadline: number): Diff[]
+    {
+        // Scan the text on a line-by-line basis first.
+        const a = this.diff_linesToChars_(text1, text2);
+        text1 = a.chars1;
+        text2 = a.chars2;
+        const linearray = a.lineArray;
+
+        const diffs = this.diff_main(text1, text2, false, deadline);
+
+        // Convert the diff back to original text.
+        this.diff_charsToLines_(diffs, linearray);
+        // Eliminate freak matches (e.g. blank lines)
+        this.diff_cleanupSemantic(diffs);
+
+        // Re-diff any replacement blocks, this time character-by-character.
+        // Add a dummy entry at the end.
+        diffs.push([DiffOperation.DIFF_EQUAL, ""]);
+        let pointer = 0;
+        let count_delete = 0;
+        let count_insert = 0;
+        let text_delete = "";
+        let text_insert = "";
+        while (pointer < diffs.length)
+        {
+            switch (diffs[pointer][0])
+            {
+                case DiffOperation.DIFF_INSERT:
+                    count_insert++;
+                    text_insert += diffs[pointer][1];
+                    break;
+                case DiffOperation.DIFF_DELETE:
+                    count_delete++;
+                    text_delete += diffs[pointer][1];
+                    break;
+                case DiffOperation.DIFF_EQUAL:
+                    // Upon reaching an equality, check for prior redundancies.
+                    if (count_delete >= 1 && count_insert >= 1)
+                    {
+                        // Delete the offending records and add the merged ones.
+                        diffs.splice(pointer - count_delete - count_insert, count_delete + count_insert);
+                        pointer = pointer - count_delete - count_insert;
+                        const subDiff = this.diff_main(text_delete, text_insert, false, deadline);
+                        for (let j = subDiff.length - 1; j >= 0; j--)
+                        {
+                            diffs.splice(pointer, 0, subDiff[j]);
+                        }
+                        pointer = pointer + subDiff.length;
+                    }
+                    count_insert = 0;
+                    count_delete = 0;
+                    text_delete = "";
+                    text_insert = "";
+                    break;
+            }
+            pointer++;
+        }
+        // Remove the dummy entry at the end.
+        diffs.pop();
+
+        return diffs;
     }
 }
