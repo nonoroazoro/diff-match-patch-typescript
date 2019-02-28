@@ -78,7 +78,7 @@ export class DiffMatchPatch
      *
      * @param {string} text1 Old string to be diffed.
      * @param {string} text2 New string to be diffed.
-     * @param {boolean} opt_checklines Optional speedup flag. If present and false,
+     * @param {boolean} [opt_checklines] Optional speedup flag. If present and false,
      * then don't run a line-level diff first to identify the changed areas.
      * Defaults to true, which does a faster, slightly less optimal diff.
      * @param {number} [opt_deadline] Optional time when the diff should be complete
@@ -86,7 +86,7 @@ export class DiffMatchPatch
      * instead.
      * @returns {Diff[]} Array of diff tuples.
      */
-    public diff_main(text1: string, text2: string, opt_checklines: boolean, opt_deadline?: number): Diff[]
+    public diff_main(text1: string, text2: string, opt_checklines?: boolean, opt_deadline?: number): Diff[]
     {
         // Set a deadline by which time the diff must be complete.
         if (typeof opt_deadline === "undefined")
