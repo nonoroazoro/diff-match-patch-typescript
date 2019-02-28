@@ -676,4 +676,62 @@ export class DiffMatchPatch
             diffs[i][1] = text.join("");
         }
     }
+
+    /**
+     * Determine if the suffix of one string is the prefix of another.
+     *
+     * @private
+     * @param {string} text1 First string.
+     * @param {string} text2 Second string.
+     * @returns {number} The number of characters common to the end of the first
+     * string and the start of the second string.
+     */
+    private diff_commonOverlap_(text1: string, text2: string): number
+    {
+        // Cache the text lengths to prevent multiple calls.
+        const text1_length = text1.length;
+        const text2_length = text2.length;
+        // Eliminate the null case.
+        if (text1_length === 0 || text2_length === 0)
+        {
+            return 0;
+        }
+        // Truncate the longer string.
+        if (text1_length > text2_length)
+        {
+            text1 = text1.substring(text1_length - text2_length);
+        }
+        else if (text1_length < text2_length)
+        {
+            text2 = text2.substring(0, text1_length);
+        }
+        let text_length = text1_length < text2_length ? text1_length : text2_length;
+        // Quick check for the worst case.
+        if (text1 === text2)
+        {
+            return text_length;
+        }
+
+        // Start by looking for a single character match
+        // and increase length until no match is found.
+        // Performance analysis: https://neil.fraser.name/news/2010/11/04/
+        let best = 0;
+        let length = 1;
+        while (true)
+        {
+            const pattern = text1.substring(text_length - length);
+            const found = text2.indexOf(pattern);
+            if (found === -1)
+            {
+                return best;
+            }
+            length += found;
+            if (found === 0 ||
+                text1.substring(text_length - length) === text2.substring(0, length))
+            {
+                best = length;
+                length++;
+            }
+        }
+    }
 }
