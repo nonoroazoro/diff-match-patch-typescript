@@ -2,6 +2,8 @@ import { Diff, DiffOperation } from "../types";
 
 /**
  * Class representing one patch operation.
+ *
+ * Ported by [xiaochao.k@gmail.com](https://github.com/nonoroazoro)
  */
 export class PatchObject
 {
