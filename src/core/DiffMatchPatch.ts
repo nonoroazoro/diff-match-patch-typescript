@@ -1183,6 +1183,33 @@ export class DiffMatchPatch
 
         return patches;
     }
+
+    /**
+     * Given an array of patches, return another array that is identical.
+     *
+     * @param {PatchObject[]>} patches Array of Patch objects.
+     * @returns {PatchObject[]} Array of Patch objects.
+     */
+    public patch_deepCopy(patches: PatchObject[]): PatchObject[]
+    {
+        // Making deep copies is hard in JavaScript.
+        const patchesCopy = [];
+        for (let x = 0; x < patches.length; x++)
+        {
+            const patch = patches[x];
+            const patchCopy = new PatchObject();
+            for (let y = 0; y < patch.diffs.length; y++)
+            {
+                patchCopy.diffs[y] = [patch.diffs[y][0], patch.diffs[y][1]];
+            }
+            patchCopy.start1 = patch.start1;
+            patchCopy.start2 = patch.start2;
+            patchCopy.length1 = patch.length1;
+            patchCopy.length2 = patch.length2;
+            patchesCopy[x] = patchCopy;
+        }
+        return patchesCopy;
+    }
     //#endregion PATCH FUNCTIONS (public)
 
     //#region DIFF FUNCTIONS (private)
