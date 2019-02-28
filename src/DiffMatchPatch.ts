@@ -1871,5 +1871,26 @@ export class DiffMatchPatch
         }
         return accuracy + (proximity / this.Match_Distance);
     }
+
+    /**
+     * Initialize the alphabet for the Bitap algorithm.
+     *
+     * @private
+     * @param {string} pattern The text to encode.
+     * @returns {Record<string, number>} Hash of character locations.
+     */
+    private match_alphabet_(pattern: string): Record<string, number>
+    {
+        const s: Record<string, number> = {};
+        for (let i = 0; i < pattern.length; i++)
+        {
+            s[pattern.charAt(i)] = 0;
+        }
+        for (let i = 0; i < pattern.length; i++)
+        {
+            s[pattern.charAt(i)] |= 1 << (pattern.length - i - 1);
+        }
+        return s;
+    }
     //#endregion MATCH FUNCTIONS (private)
 }
