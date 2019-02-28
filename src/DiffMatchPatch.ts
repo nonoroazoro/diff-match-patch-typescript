@@ -796,6 +796,44 @@ export class DiffMatchPatch
     }
 
     /**
+     * Compute and return the source text (all equalities and deletions).
+     *
+     * @param {Diff[]} diffs Array of diff tuples.
+     * @return {string} Source text.
+     */
+    public diff_text1(diffs: Diff[])
+    {
+        const text = [];
+        for (let x = 0; x < diffs.length; x++)
+        {
+            if (diffs[x][0] !== DiffOperation.DIFF_INSERT)
+            {
+                text[x] = diffs[x][1];
+            }
+        }
+        return text.join("");
+    }
+
+    /**
+     * Compute and return the destination text (all equalities and insertions).
+     *
+     * @param {Diff[]} diffs Array of diff tuples.
+     * @return {string} Destination text.
+     */
+    public diff_text2(diffs: Diff[])
+    {
+        const text = [];
+        for (let x = 0; x < diffs.length; x++)
+        {
+            if (diffs[x][0] !== DiffOperation.DIFF_DELETE)
+            {
+                text[x] = diffs[x][1];
+            }
+        }
+        return text.join("");
+    }
+
+    /**
      * Find the differences between two texts. Assumes that the texts do not
      * have any common prefix or suffix.
      *
