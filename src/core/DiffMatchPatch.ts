@@ -171,7 +171,7 @@ export class DiffMatchPatch
         // Binary search.
         // Performance analysis: https://neil.fraser.name/news/2007/10/09/
         let pointermin = 0;
-        let pointermax = Math.min(text1.length, text2.length);
+        let pointermax = math.min(text1.length, text2.length);
         let pointermid = pointermax;
         let pointerstart = 0;
         while (pointermin < pointermid)
@@ -210,7 +210,7 @@ export class DiffMatchPatch
         // Binary search.
         // Performance analysis: https://neil.fraser.name/news/2007/10/09/
         let pointermin = 0;
-        let pointermax = Math.min(text1.length, text2.length);
+        let pointermax = math.min(text1.length, text2.length);
         let pointermid = pointermax;
         let pointerend = 0;
         while (pointermin < pointermid)
@@ -2471,7 +2471,7 @@ export class DiffMatchPatch
                         if (best_loc > loc)
                         {
                             // When passing loc, don't exceed our current distance from loc.
-                            start = Math.max(1, 2 * loc - best_loc);
+                            start = math.max(1, 2 * loc - best_loc);
                         }
                         else
                         {
