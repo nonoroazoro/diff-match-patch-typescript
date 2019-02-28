@@ -38,6 +38,7 @@
                 ]
             }
         ],
+        "no-bitwise": false,
         "no-consecutive-blank-lines": {
             "severity": "warn",
             "options": 1
