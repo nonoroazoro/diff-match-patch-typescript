@@ -1527,6 +1527,132 @@ export class DiffMatchPatch
             }
         }
     }
+
+    /**
+     * Take a list of patches and return a textual representation.
+     *
+     * @param {PatchObject[]} patches Array of Patch objects.
+     * @returns {string} Text representation of patches.
+     */
+    public patch_toText(patches: PatchObject[]): string
+    {
+        const text = [];
+        for (let x = 0; x < patches.length; x++)
+        {
+            text[x] = patches[x];
+        }
+        return text.join("");
+    }
+
+    /**
+     * Parse a textual representation of patches and return a list of Patch objects.
+     *
+     * @param {string} textline Text representation of patches.
+     * @returns {PatchObject[]} Array of Patch objects.
+     * @throws {Error} If invalid input.
+     */
+    public patch_fromText(textline: string): PatchObject[]
+    {
+        const patches: PatchObject[] = [];
+        if (!textline)
+        {
+            return patches;
+        }
+        const text = textline.split("\n");
+        let textPointer = 0;
+        const patchHeader = /^@@ -(\d+),?(\d*) \+(\d+),?(\d*) @@$/;
+        while (textPointer < text.length)
+        {
+            const m = text[textPointer].match(patchHeader);
+            if (!m)
+            {
+                throw new Error("Invalid patch string: " + text[textPointer]);
+            }
+            const patch = new PatchObject();
+            patches.push(patch);
+            patch.start1 = parseInt(m[1], 10);
+            if (m[2] === "")
+            {
+                patch.start1--;
+                patch.length1 = 1;
+            }
+            else if (m[2] === "0")
+            {
+                patch.length1 = 0;
+            }
+            else
+            {
+                patch.start1--;
+                patch.length1 = parseInt(m[2], 10);
+            }
+
+            patch.start2 = parseInt(m[3], 10);
+            if (m[4] === "")
+            {
+                patch.start2--;
+                patch.length2 = 1;
+            }
+            else if (m[4] === "0")
+            {
+                patch.length2 = 0;
+            }
+            else
+            {
+                patch.start2--;
+                patch.length2 = parseInt(m[4], 10);
+            }
+            textPointer++;
+
+            let sign: string;
+            let line: string;
+            let rawLine: string;
+            while (textPointer < text.length)
+            {
+                sign = text[textPointer].charAt(0);
+                rawLine = text[textPointer].substring(1);
+                try
+                {
+                    line = decodeURI(rawLine);
+                }
+                catch (ex)
+                {
+                    // Malformed URI sequence.
+                    throw new Error("Illegal escape in patch_fromText: " + rawLine);
+                }
+                if (sign === "-")
+                {
+                    // Deletion.
+                    patch.diffs.push([DiffOperation.DIFF_DELETE, line]);
+                }
+                else if (sign === "+")
+                {
+                    // Insertion.
+                    patch.diffs.push([DiffOperation.DIFF_INSERT, line]);
+                }
+                else if (sign === " ")
+                {
+                    // Minor equality.
+                    patch.diffs.push([DiffOperation.DIFF_EQUAL, line]);
+                }
+                else if (sign === "@")
+                {
+                    // Start of next patch.
+                    break;
+                }
+                else if (sign === "")
+                {
+                    // Blank line?  Whatever.
+                }
+                else
+                {
+                    // WTF?
+                    throw new Error('Invalid patch mode "' + sign + '" in: ' + line);
+                }
+                textPointer++;
+            }
+        }
+        return patches;
+    }
     //#endregion PATCH FUNCTIONS (public)
 
     //#region DIFF FUNCTIONS (private)
