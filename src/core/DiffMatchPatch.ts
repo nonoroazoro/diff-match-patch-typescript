@@ -6,9 +6,9 @@ import
     nonAlphaNumericRegex_,
     whitespaceRegex_
 } from "../constants";
-import { PatchObject } from "../core/PatchObject";
 import { Diff, DiffOperation, HalfMatchArray } from "../types";
-import * as math from "../utils/math";
+import { math } from "../utils";
+import { PatchObject } from "./PatchObject";
 
 /**
  * Diff Match and Patch
