@@ -81,12 +81,12 @@ export class DiffMatchPatch
      * @param {boolean} opt_checklines Optional speedup flag. If present and false,
      * then don't run a line-level diff first to identify the changed areas.
      * Defaults to true, which does a faster, slightly less optimal diff.
-     * @param {number} opt_deadline Optional time when the diff should be complete
+     * @param {number} [opt_deadline] Optional time when the diff should be complete
      * by. Used internally for recursive calls. Users should set DiffTimeout
      * instead.
      * @returns {Diff[]} Array of diff tuples.
      */
-    public diff_main(text1: string, text2: string, opt_checklines: boolean, opt_deadline: number): Diff[]
+    public diff_main(text1: string, text2: string, opt_checklines: boolean, opt_deadline?: number): Diff[]
     {
         // Set a deadline by which time the diff must be complete.
         if (typeof opt_deadline === "undefined")
@@ -1016,7 +1016,173 @@ export class DiffMatchPatch
     //#endregion MATCH FUNCTIONS (public)
 
     //#region PATCH FUNCTIONS (public)
+    /**
+     * Compute a list of patches to turn text1 into text2.
+     * Use diffs if provided, otherwise compute it ourselves.
+     * There are four ways to call this function, depending on what data is
+     * available to the caller:
+     * Method 1:
+     * a = text1, b = text2
+     * Method 2:
+     * a = diffs
+     * Method 3 (optimal):
+     * a = text1, b = diffs
+     * Method 4 (deprecated, use method 3):
+     * a = text1, b = text2, c = diffs
+     *
+     * @param {(string|Diff[])} a text1 (methods 1,3,4) or
+     * Array of diff tuples for text1 to text2 (method 2).
+     * @param {(string|Diff[])} opt_b text2 (methods 1,4) or
+     * Array of diff tuples for text1 to text2 (method 3) or undefined (method 2).
+     * @param {(string|Diff[])} opt_c Array of diff tuples
+     * for text1 to text2 (method 4) or undefined (methods 1,2,3).
+     * @returns {PatchObject[]} Array of Patch objects.
+     */
+    public patch_make(
+        a: string | Diff[],
+        opt_b: string | Diff[],
+        opt_c: string | Diff[]
+    ): PatchObject[]
+    {
+        let text1: string;
+        let diffs: Diff[];
+        if (typeof a === "string" &&
+            typeof opt_b === "string" &&
+            typeof opt_c === "undefined")
+        {
+            // Method 1: text1, text2
+            // Compute diffs from text1 and text2.
+            text1 = a;
+            diffs = this.diff_main(text1, opt_b, true);
+            if (diffs.length > 2)
+            {
+                this.diff_cleanupSemantic(diffs);
+                this.diff_cleanupEfficiency(diffs);
+            }
+        }
+        else if (a &&
+            typeof a === "object" &&
+            typeof opt_b === "undefined" &&
+            typeof opt_c === "undefined")
+        {
+            // Method 2: diffs
+            // Compute text1 from diffs.
+            diffs = a;
+            text1 = this.diff_text1(diffs);
+        }
+        else if (typeof a === "string" &&
+            opt_b &&
+            typeof opt_b === "object" &&
+            typeof opt_c === "undefined")
+        {
+            // Method 3: text1, diffs
+            text1 = a;
+            diffs = opt_b;
+        }
+        else if (typeof a === "string" &&
+            typeof opt_b === "string" &&
+            opt_c &&
+            typeof opt_c === "object")
+        {
+            // Method 4: text1, text2, diffs
+            // text2 is not used.
+            text1 = a;
+            diffs = opt_c;
+        }
+        else
+        {
+            throw new Error("Unknown call format to patch_make.");
+        }
 
+        if (diffs.length === 0)
+        {
+            return [];  // Get rid of the null case.
+        }
+        const patches = [];
+        let patch = new PatchObject();
+        let patchDiffLength = 0;  // Keeping our own length var is faster in JS.
+        let char_count1 = 0;  // Number of characters into the text1 string.
+        let char_count2 = 0;  // Number of characters into the text2 string.
+        // Start with text1 (prepatch_text) and apply the diffs until we arrive at
+        // text2 (postpatch_text).  We recreate the patches one by one to determine
+        // context info.
+        let prepatch_text = text1;
+        let postpatch_text = text1;
+        for (let x = 0; x < diffs.length; x++)
+        {
+            const diff_type = diffs[x][0];
+            const diff_text = diffs[x][1];
+
+            if (!patchDiffLength && diff_type !== DiffOperation.DIFF_EQUAL)
+            {
+                // A new patch starts here.
+                patch.start1 = char_count1;
+                patch.start2 = char_count2;
+            }
+
+            switch (diff_type)
+            {
+                case DiffOperation.DIFF_INSERT:
+                    patch.diffs[patchDiffLength++] = diffs[x];
+                    patch.length2 += diff_text.length;
+                    postpatch_text = postpatch_text.substring(0, char_count2)
+                        + diff_text + postpatch_text.substring(char_count2);
+                    break;
+                case DiffOperation.DIFF_DELETE:
+                    patch.length1 += diff_text.length;
+                    patch.diffs[patchDiffLength++] = diffs[x];
+                    postpatch_text = postpatch_text.substring(0, char_count2)
+                        + postpatch_text.substring(char_count2 + diff_text.length);
+                    break;
+                case DiffOperation.DIFF_EQUAL:
+                    if (diff_text.length <= 2 * this.Patch_Margin &&
+                        patchDiffLength &&
+                        diffs.length !== x + 1)
+                    {
+                        // Small equality inside a patch.
+                        patch.diffs[patchDiffLength++] = diffs[x];
+                        patch.length1 += diff_text.length;
+                        patch.length2 += diff_text.length;
+                    }
+                    else if (diff_text.length >= 2 * this.Patch_Margin)
+                    {
+                        // Time for a new patch.
+                        if (patchDiffLength)
+                        {
+                            this.patch_addContext_(patch, prepatch_text);
+                            patches.push(patch);
+                            patch = new PatchObject();
+                            patchDiffLength = 0;
+                            // Unlike Unidiff, our patch lists have a rolling context.
+                            // https://github.com/google/diff-match-patch/wiki/Unidiff
+                            // Update prepatch text & pos to reflect the application of the
+                            // just completed patch.
+                            prepatch_text = postpatch_text;
+                            char_count1 = char_count2;
+                        }
+                    }
+                    break;
+            }
+
+            // Update the current character count.
+            if (diff_type !== DiffOperation.DIFF_INSERT)
+            {
+                char_count1 += diff_text.length;
+            }
+            if (diff_type !== DiffOperation.DIFF_DELETE)
+            {
+                char_count2 += diff_text.length;
+            }
+        }
+        // Pick up the leftover patch if not empty.
+        if (patchDiffLength)
+        {
+            this.patch_addContext_(patch, prepatch_text);
+            patches.push(patch);
+        }
+
+        return patches;
+    }
     //#endregion PATCH FUNCTIONS (public)
 
     //#region DIFF FUNCTIONS (private)
