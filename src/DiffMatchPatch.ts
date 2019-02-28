@@ -146,12 +146,14 @@ export class DiffMatchPatch
      *
      * @param {string} text1 First string.
      * @param {string} text2 Second string.
-     * @return {number} The number of characters common to the start of each string.
+     * @returns {number} The number of characters common to the start of each string.
      */
     public diff_commonPrefix(text1: string, text2: string): number
     {
         // Quick check for common null cases.
-        if (!text1 || !text2 || text1.charAt(0) !== text2.charAt(0))
+        if (!text1 ||
+            !text2 ||
+            text1.charAt(0) !== text2.charAt(0))
         {
             return 0;
         }
@@ -163,13 +165,50 @@ export class DiffMatchPatch
         let pointerstart = 0;
         while (pointermin < pointermid)
         {
-            if (
-                text1.substring(pointerstart, pointermid)
-                === text2.substring(pointerstart, pointermid)
-            )
+            if (text1.substring(pointerstart, pointermid) ===
+                text2.substring(pointerstart, pointermid))
             {
                 pointermin = pointermid;
                 pointerstart = pointermin;
+            }
+            else
+            {
+                pointermax = pointermid;
+            }
+            pointermid = Math.floor((pointermax - pointermin) / 2 + pointermin);
+        }
+        return pointermid;
+    }
+
+    /**
+     * Determine the common suffix of two strings.
+     *
+     * @param {string} text1 First string.
+     * @param {string} text2 Second string.
+     * @returns {number} The number of characters common to the end of each string.
+     */
+    public diff_commonSuffix(text1: string, text2: string): number
+    {
+        // Quick check for common null cases.
+        if (!text1 ||
+            !text2 ||
+            text1.charAt(text1.length - 1) !== text2.charAt(text2.length - 1))
+        {
+            return 0;
+        }
+        // Binary search.
+        // Performance analysis: https://neil.fraser.name/news/2007/10/09/
+        let pointermin = 0;
+        let pointermax = Math.min(text1.length, text2.length);
+        let pointermid = pointermax;
+        let pointerend = 0;
+        while (pointermin < pointermid)
+        {
+            if (text1.substring(text1.length - pointermid, text1.length - pointerend) ===
+                text2.substring(text2.length - pointermid, text2.length - pointerend))
+            {
+                pointermin = pointermid;
+                pointerend = pointermin;
             }
             else
             {
@@ -507,7 +546,7 @@ export class DiffMatchPatch
      * @param {number} x Index of split point in text1.
      * @param {number} y Index of split point in text2.
      * @param {number} deadline Time at which to bail if not yet complete.
-     * @return {Diff[]} Array of diff tuples.
+     * @returns {Diff[]} Array of diff tuples.
      */
     private diff_bisectSplit_(
         text1: string,
@@ -563,17 +602,17 @@ export class DiffMatchPatch
      *
      * @private
      * @param {string} text String to encode.
-     * @return {string} Encoded string.
      * @param {string[]} lineArray Array of unique strings.
      * @param {Record<string, number>} lineHash Line-hash pairs.
      * @param {number} maxLines
+     * @returns {string} Encoded string.
      */
     private diff_linesToCharsMunge_(
         text: string,
         lineArray: string[],
         lineHash: Record<string, number>,
         maxLines: number
-    )
+    ): string
     {
         let chars = "";
         // Walk the text, pulling out a substring for each line.
@@ -592,11 +631,9 @@ export class DiffMatchPatch
             }
             let line = text.substring(lineStart, lineEnd + 1);
 
-            if (
-                lineHash.hasOwnProperty
-                    ? lineHash.hasOwnProperty(line)
-                    : (lineHash[line] !== undefined)
-            )
+            if (lineHash.hasOwnProperty
+                ? lineHash.hasOwnProperty(line)
+                : (lineHash[line] !== undefined))
             {
                 chars += String.fromCharCode(lineHash[line]);
             }
