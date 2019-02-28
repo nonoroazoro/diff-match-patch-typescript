@@ -52,6 +52,7 @@
         "one-line": false,
         "only-arrow-functions": false,
         "prefer-const": true,
+        "prefer-for-of": false,
         "space-before-function-paren": false,
         "trailing-comma": [
             true,
