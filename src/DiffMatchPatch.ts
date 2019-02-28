@@ -51,7 +51,7 @@ export class DiffMatchPatch
 
     // When deleting a large block of text (over ~64 characters), how close do
     // the contents have to be to match the expected contents. (0.0 = perfection,
-    // 1.0 = very loose).  Note that Match_Threshold controls how closely the
+    // 1.0 = very loose). Note that Match_Threshold controls how closely the
     // end points of a delete need to match.
     private Patch_DeleteThreshold = 0.5;
 
@@ -75,12 +75,7 @@ export class DiffMatchPatch
      * instead.
      * @returns {Diff[]} Array of diff tuples.
      */
-    public diff_main(
-        text1: string,
-        text2: string,
-        opt_checklines: boolean,
-        opt_deadline: number
-    )
+    public diff_main(text1: string, text2: string, opt_checklines: boolean, opt_deadline: number)
     {
         // Set a deadline by which time the diff must be complete.
         if (typeof opt_deadline === "undefined")
@@ -143,5 +138,89 @@ export class DiffMatchPatch
         }
         this.diff_cleanupMerge(diffs);
         return diffs;
+    }
+
+    /**
+     * Find the differences between two texts. Assumes that the texts do not
+     * have any common prefix or suffix.
+     *
+     * @private
+     * @param {string} text1 Old string to be diffed.
+     * @param {string} text2 New string to be diffed.
+     * @param {boolean} checklines Speedup flag. If false, then don't run a
+     * line-level diff first to identify the changed areas.
+     * If true, then run a faster, slightly less optimal diff.
+     * @param {number} deadline Time when the diff should be complete by.
+     * @returns {Diff[]} Array of diff tuples.
+     */
+    private diff_compute_(text1: string, text2: string, checklines: boolean, deadline: number)
+    {
+        let diffs: Diff[];
+
+        if (!text1)
+        {
+            // Just add some text (speedup).
+            return [[DiffOperation.DIFF_INSERT, text2]];
+        }
+
+        if (!text2)
+        {
+            // Just delete some text (speedup).
+            return [[DiffOperation.DIFF_DELETE, text1]];
+        }
+
+        const longtext = text1.length > text2.length ? text1 : text2;
+        const shorttext = text1.length > text2.length ? text2 : text1;
+        const i = longtext.indexOf(shorttext);
+        if (i !== -1)
+        {
+            // Shorter text is inside the longer text (speedup).
+            diffs = [
+                [DiffOperation.DIFF_INSERT, longtext.substring(0, i)],
+                [DiffOperation.DIFF_EQUAL, shorttext],
+                [DiffOperation.DIFF_INSERT, longtext.substring(i + shorttext.length)]
+            ];
+            // Swap insertions for deletions if diff is reversed.
+            if (text1.length > text2.length)
+            {
+                diffs[0][0] = DiffOperation.DIFF_DELETE;
+                diffs[2][0] = DiffOperation.DIFF_DELETE;
+            }
+            return diffs;
+        }
+
+        if (shorttext.length === 1)
+        {
+            // Single character string.
+            // After the previous speedup, the character can't be an equality.
+            return [
+                [DiffOperation.DIFF_DELETE, text1],
+                [DiffOperation.DIFF_INSERT, text2]
+            ];
+        }
+
+        // Check to see if the problem can be split in two.
+        const hm = this.diff_halfMatch_(text1, text2);
+        if (hm)
+        {
+            // A half-match was found, sort out the return data.
+            const text1_a = hm[0];
+            const text1_b = hm[1];
+            const text2_a = hm[2];
+            const text2_b = hm[3];
+            const mid_common = hm[4];
+            // Send both pairs off for separate processing.
+            const diffs_a = this.diff_main(text1_a, text2_a, checklines, deadline);
+            const diffs_b = this.diff_main(text1_b, text2_b, checklines, deadline);
+            // Merge the results.
+            return diffs_a.concat([[DiffOperation.DIFF_EQUAL, mid_common]], diffs_b);
+        }
+
+        if (checklines && text1.length > 100 && text2.length > 100)
+        {
+            return this.diff_lineMode_(text1, text2, deadline);
+        }
+
+        return this.diff_bisect_(text1, text2, deadline);
     }
 }
