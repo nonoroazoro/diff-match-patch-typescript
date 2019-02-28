@@ -70,6 +70,7 @@ export class DiffMatchPatch
     // The number of bits in an int.
     private Match_MaxBits = 32;
 
+    //#region DIFF FUNCTIONS (public)
     /**
      * Find the differences between two texts. Simplifies the problem by stripping
      * any common prefix or suffix off the texts before diffing.
@@ -970,7 +971,50 @@ export class DiffMatchPatch
         }
         return diffs;
     }
+    //#endregion DIFF FUNCTIONS (public)
 
+    //#region MATCH FUNCTIONS (public)
+    /**
+     * Locate the best instance of 'pattern' in 'text' near 'loc'.
+     *
+     * @param {string} text The text to search.
+     * @param {string} pattern The pattern to search for.
+     * @param {number} loc The location to search around.
+     * @returns {number} Best match index or -1.
+     */
+    public match_main(text: string, pattern: string, loc: number): number
+    {
+        // Check for null inputs.
+        if (text == null || pattern == null || loc == null)
+        {
+            throw new Error("Null input. (match_main)");
+        }
+
+        loc = math.max(0, math.min(loc, text.length));
+        if (text === pattern)
+        {
+            // Shortcut (potentially not guaranteed by the algorithm)
+            return 0;
+        }
+        else if (!text.length)
+        {
+            // Nothing to match.
+            return -1;
+        }
+        else if (text.substring(loc, loc + pattern.length) === pattern)
+        {
+            // Perfect match at the perfect spot!  (Includes case of null pattern)
+            return loc;
+        }
+        else
+        {
+            // Do a fuzzy compare.
+            return this.match_bitap_(text, pattern, loc);
+        }
+    }
+    //#endregion MATCH FUNCTIONS (public)
+
+    //#region DIFF FUNCTIONS (private)
     /**
      * Find the differences between two texts. Assumes that the texts do not
      * have any common prefix or suffix.
@@ -1683,4 +1727,149 @@ export class DiffMatchPatch
         }
         return 0;
     }
+    //#endregion DIFF FUNCTIONS (private)
+
+    //#region MATCH FUNCTIONS (private)
+    /**
+     * Locate the best instance of 'pattern' in 'text' near 'loc' using the
+     * Bitap algorithm.
+     *
+     * @private
+     * @param {string} text The text to search.
+     * @param {string} pattern The pattern to search for.
+     * @param {number} loc The location to search around.
+     * @returns {number} Best match index or -1.
+     */
+    private match_bitap_(text: string, pattern: string, loc: number): number
+    {
+        if (pattern.length > this.Match_MaxBits)
+        {
+            throw new Error("Pattern too long for this browser.");
+        }
+
+        // Initialize the alphabet.
+        const s = this.match_alphabet_(pattern);
+
+        // Highest score beyond which we give up.
+        let score_threshold = this.Match_Threshold;
+        // Is there a nearby exact match? (speedup)
+        let best_loc = text.indexOf(pattern, loc);
+        if (best_loc !== -1)
+        {
+            score_threshold = math.min(this.match_bitapScore_(0, best_loc, pattern, loc), score_threshold);
+            // What about in the other direction? (speedup)
+            best_loc = text.lastIndexOf(pattern, loc + pattern.length);
+            if (best_loc !== -1)
+            {
+                score_threshold = math.min(this.match_bitapScore_(0, best_loc, pattern, loc), score_threshold);
+            }
+        }
+
+        // Initialize the bit arrays.
+        const matchmask = 1 << (pattern.length - 1);
+        best_loc = -1;
+
+        let bin_min: number;
+        let bin_mid: number;
+        let bin_max = pattern.length + text.length;
+        let last_rd: number[];
+        for (let d = 0; d < pattern.length; d++)
+        {
+            // Scan for the best match; each iteration allows for one more error.
+            // Run a binary search to determine how far from 'loc' we can stray at this
+            // error level.
+            bin_min = 0;
+            bin_mid = bin_max;
+            while (bin_min < bin_mid)
+            {
+                if (this.match_bitapScore_(d, loc + bin_mid, pattern, loc) <= score_threshold)
+                {
+                    bin_min = bin_mid;
+                }
+                else
+                {
+                    bin_max = bin_mid;
+                }
+                bin_mid = Math.floor((bin_max - bin_min) / 2 + bin_min);
+            }
+            // Use the result from this iteration as the maximum for the next.
+            bin_max = bin_mid;
+            let start = math.max(1, loc - bin_mid + 1);
+            const finish = math.min(loc + bin_mid, text.length) + pattern.length;
+
+            const rd: number[] = Array(finish + 2);
+            rd[finish + 1] = (1 << d) - 1;
+            for (let j = finish; j >= start; j--)
+            {
+                // The alphabet (s) is a sparse hash, so the following line generates
+                // warnings.
+                const charMatch = s[text.charAt(j - 1)];
+                if (d === 0)
+                {
+                    // First pass: exact match.
+                    rd[j] = ((rd[j + 1] << 1) | 1) & charMatch;
+                }
+                else
+                {
+                    // Subsequent passes: fuzzy match.
+                    rd[j] = (((rd[j + 1] << 1) | 1) & charMatch) |
+                        (((last_rd![j + 1] | last_rd![j]) << 1) | 1) |
+                        last_rd![j + 1];
+                }
+                if (rd[j] & matchmask)
+                {
+                    const score = this.match_bitapScore_(d, j - 1, pattern, loc);
+                    // This match will almost certainly be better than any existing match.
+                    // But check anyway.
+                    if (score <= score_threshold)
+                    {
+                        // Told you so.
+                        score_threshold = score;
+                        best_loc = j - 1;
+                        if (best_loc > loc)
+                        {
+                            // When passing loc, don't exceed our current distance from loc.
+                            start = Math.max(1, 2 * loc - best_loc);
+                        }
+                        else
+                        {
+                            // Already passed loc, downhill from here on in.
+                            break;
+                        }
+                    }
+                }
+            }
+            // No hope for a (better) match at greater error levels.
+            if (this.match_bitapScore_(d + 1, loc, pattern, loc) > score_threshold)
+            {
+                break;
+            }
+            last_rd = rd;
+        }
+        return best_loc;
+    }
+
+    /**
+     * Compute and return the score for a match with e errors and x location.
+     * Accesses loc and pattern through being a closure.
+     *
+     * @private
+     * @param {number} e Number of errors in match.
+     * @param {number} x Location of match.
+     * @param {string} pattern The pattern to search for.
+     * @param {number} loc The location to search around.
+     * @returns {number} Overall score for match (0.0 = good, 1.0 = bad).
+     */
+    private match_bitapScore_(e: number, x: number, pattern: string, loc: number): number
+    {
+        const accuracy = e / pattern.length;
+        const proximity = Math.abs(loc - x);
+        if (!this.Match_Distance)
+        {
+            // Dodge divide by zero error.
+            return proximity ? 1.0 : accuracy;
+        }
+        return accuracy + (proximity / this.Match_Distance);
+    }
+    //#endregion MATCH FUNCTIONS (private)
 }
