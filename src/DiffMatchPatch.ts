@@ -6,6 +6,7 @@ import
     nonAlphaNumericRegex_,
     whitespaceRegex_
 } from "./constants";
+import { PatchObject } from "./core/PatchObject";
 import { Diff, DiffOperation, HalfMatchArray } from "./types";
 import * as math from "./utils/math";
 
@@ -1014,6 +1015,10 @@ export class DiffMatchPatch
     }
     //#endregion MATCH FUNCTIONS (public)
 
+    //#region PATCH FUNCTIONS (public)
+
+    //#endregion PATCH FUNCTIONS (public)
+
     //#region DIFF FUNCTIONS (private)
     /**
      * Find the differences between two texts. Assumes that the texts do not
@@ -1893,4 +1898,65 @@ export class DiffMatchPatch
         return s;
     }
     //#endregion MATCH FUNCTIONS (private)
+
+    //#region PATCH FUNCTIONS (private)
+    /**
+     * Increase the context until it is unique,
+     * but don't let the pattern expand beyond Match_MaxBits.
+     *
+     * @private
+     * @param {PatchObject} patch The patch to grow.
+     * @param {string} text Source text.
+     */
+    private patch_addContext_(patch: PatchObject, text: string)
+    {
+        if (text.length === 0)
+        {
+            return;
+        }
+        if (patch.start2 === null)
+        {
+            throw Error("patch not initialized");
+        }
+        let pattern = text.substring(patch.start2, patch.start2 + patch.length1);
+        let padding = 0;
+
+        // Look for the first and last matches of pattern in text.  If two different
+        // matches are found, increase the pattern length.
+        while (text.indexOf(pattern) !== text.lastIndexOf(pattern) &&
+            pattern.length < (this.Match_MaxBits - this.Patch_Margin - this.Patch_Margin))
+        {
+            padding += this.Patch_Margin;
+            pattern = text.substring(
+                patch.start2 - padding,
+                patch.start2 + patch.length1 + padding
+            );
+        }
+        // Add one chunk for good luck.
+        padding += this.Patch_Margin;
+
+        // Add the prefix.
+        const prefix = text.substring(patch.start2 - padding, patch.start2);
+        if (prefix)
+        {
+            patch.diffs.unshift([DiffOperation.DIFF_EQUAL, prefix]);
+        }
+        // Add the suffix.
+        const suffix = text.substring(
+            patch.start2 + patch.length1,
+            patch.start2 + patch.length1 + padding
+        );
+        if (suffix)
+        {
+            patch.diffs.push([DiffOperation.DIFF_EQUAL, suffix]);
+        }
+
+        // Roll back the start points.
+        patch.start1 -= prefix.length;
+        patch.start2 -= prefix.length;
+        // Extend the lengths.
+        patch.length1 += prefix.length + suffix.length;
+        patch.length2 += prefix.length + suffix.length;
+    }
+    //#endregion PATCH FUNCTIONS (private)
 }
