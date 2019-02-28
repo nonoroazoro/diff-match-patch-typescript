@@ -525,8 +525,8 @@ export class DiffMatchPatch
      * @private
      * @param {string} text String to encode.
      * @return {string} Encoded string.
-     * @param {string[]} lineArray The array of unique strings.
-     * @param {Record<string, number>} lineHash The line-hash pairs.
+     * @param {string[]} lineArray Array of unique strings.
+     * @param {Record<string, number>} lineHash Line-hash pairs.
      * @param {number} maxLines
      */
     private diff_linesToCharsMunge_(
@@ -577,5 +577,27 @@ export class DiffMatchPatch
             lineStart = lineEnd + 1;
         }
         return chars;
+    }
+
+    /**
+     * Rehydrate the text in a diff from a string of line hashes to real lines of
+     * text.
+     *
+     * @private
+     * @param {Diff[]} diffs Array of diff tuples.
+     * @param {string[]} lineArray Array of unique strings.
+     */
+    private diff_charsToLines_(diffs: Diff[], lineArray: string[])
+    {
+        for (let i = 0; i < diffs.length; i++)
+        {
+            const chars = diffs[i][1];
+            const text = [];
+            for (let j = 0; j < chars.length; j++)
+            {
+                text[j] = lineArray[chars.charCodeAt(j)];
+            }
+            diffs[i][1] = text.join("");
+        }
     }
 }
