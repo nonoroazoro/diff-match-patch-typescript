@@ -637,6 +637,174 @@ describe("diff-match-patch-ts - core/DiffMatchPatch", () =>
     // Timeout.
     expect(dmp["diff_bisect_"](a, b, 0)).toStrictEqual([[DiffOperation.DIFF_DELETE, "cat"], [DiffOperation.DIFF_INSERT, "map"]]);
   });
+
+  it("DIFF - Main", () =>
+  {
+    // Perform a trivial diff.
+
+    // Null case.
+    expect([]).toStrictEqual(dmp.diff_main("", "", false));
+
+    // Equality.
+    expect([[DiffOperation.DIFF_EQUAL, "abc"]]).toStrictEqual(dmp.diff_main("abc", "abc", false));
+
+    // Simple insertion.
+    expect([[DiffOperation.DIFF_EQUAL, "ab"], [DiffOperation.DIFF_INSERT, "123"], [DiffOperation.DIFF_EQUAL, "c"]]).toStrictEqual(dmp.diff_main("abc", "ab123c", false));
+
+    // Simple deletion.
+    expect([[DiffOperation.DIFF_EQUAL, "a"], [DiffOperation.DIFF_DELETE, "123"], [DiffOperation.DIFF_EQUAL, "bc"]]).toStrictEqual(dmp.diff_main("a123bc", "abc", false));
+
+    // Two insertions.
+    expect([
+      [DiffOperation.DIFF_EQUAL, "a"],
+      [DiffOperation.DIFF_INSERT, "123"],
+      [DiffOperation.DIFF_EQUAL, "b"],
+      [DiffOperation.DIFF_INSERT, "456"],
+      [DiffOperation.DIFF_EQUAL, "c"]
+    ]).toStrictEqual(dmp.diff_main("abc", "a123b456c", false));
+
+    // Two deletions.
+    expect([
+      [DiffOperation.DIFF_EQUAL, "a"],
+      [DiffOperation.DIFF_DELETE, "123"],
+      [DiffOperation.DIFF_EQUAL, "b"],
+      [DiffOperation.DIFF_DELETE, "456"],
+      [DiffOperation.DIFF_EQUAL, "c"]
+    ]).toStrictEqual(dmp.diff_main("a123b456c", "abc", false));
+
+    // Perform a real diff.
+    // Switch off the timeout.
+    dmp.Diff_Timeout = 0;
+    // Simple cases.
+    expect([[DiffOperation.DIFF_DELETE, "a"], [DiffOperation.DIFF_INSERT, "b"]]).toStrictEqual(dmp.diff_main("a", "b", false));
+
+    expect([
+      [DiffOperation.DIFF_DELETE, "Apple"],
+      [DiffOperation.DIFF_INSERT, "Banana"],
+      [DiffOperation.DIFF_EQUAL, "s are a"],
+      [DiffOperation.DIFF_INSERT, "lso"],
+      [DiffOperation.DIFF_EQUAL, " fruit."]
+    ]).toStrictEqual(dmp.diff_main("Apples are a fruit.", "Bananas are also fruit.", false));
+
+    expect([
+      [DiffOperation.DIFF_DELETE, "a"],
+      [DiffOperation.DIFF_INSERT, "\u0680"],
+      [DiffOperation.DIFF_EQUAL, "x"],
+      [DiffOperation.DIFF_DELETE, "\t"],
+      [DiffOperation.DIFF_INSERT, "\0"]
+    ]).toStrictEqual(dmp.diff_main("ax\t", "\u0680x\0", false));
+
+    // Overlaps.
+    expect([
+      [DiffOperation.DIFF_DELETE, "1"],
+      [DiffOperation.DIFF_EQUAL, "a"],
+      [DiffOperation.DIFF_DELETE, "y"],
+      [DiffOperation.DIFF_EQUAL, "b"],
+      [DiffOperation.DIFF_DELETE, "2"],
+      [DiffOperation.DIFF_INSERT, "xab"]
+    ]).toStrictEqual(dmp.diff_main("1ayb2", "abxab", false));
+
+    expect([
+      [DiffOperation.DIFF_INSERT, "xaxcx"],
+      [DiffOperation.DIFF_EQUAL, "abc"],
+      [DiffOperation.DIFF_DELETE, "y"]
+    ]).toStrictEqual(dmp.diff_main("abcy", "xaxcxabc", false));
+
+    expect([
+      [DiffOperation.DIFF_DELETE, "ABCD"],
+      [DiffOperation.DIFF_EQUAL, "a"],
+      [DiffOperation.DIFF_DELETE, "="],
+      [DiffOperation.DIFF_INSERT, "-"],
+      [DiffOperation.DIFF_EQUAL, "bcd"],
+      [DiffOperation.DIFF_DELETE, "="],
+      [DiffOperation.DIFF_INSERT, "-"],
+      [DiffOperation.DIFF_EQUAL, "efghijklmnopqrs"],
+      [DiffOperation.DIFF_DELETE, "EFGHIJKLMNOefg"]
+    ]).toStrictEqual(dmp.diff_main("ABCDa=bcd=efghijklmnopqrsEFGHIJKLMNOefg", "a-bcd-efghijklmnopqrs", false));
+
+    // Large equality.
+    expect([
+      [DiffOperation.DIFF_INSERT, " "],
+      [DiffOperation.DIFF_EQUAL, "a"],
+      [DiffOperation.DIFF_INSERT, "nd"],
+      [DiffOperation.DIFF_EQUAL, " [[Pennsylvania]]"],
+      [DiffOperation.DIFF_DELETE, " and [[New"]
+    ]).toStrictEqual(dmp.diff_main("a [[Pennsylvania]] and [[New", " and [[Pennsylvania]]", false));
+
+    // Timeout.
+    dmp.Diff_Timeout = 0.1;  // 100ms
+    let a = "`Twas brillig, and the slithy toves\nDid gyre and gimble in the wabe:\nAll mimsy were the borogoves"
+      + ",\nAnd the mome raths outgrabe.\n";
+    let b = "I am the very model of a modern major general,\nI've information vegetable, animal"
+      + ", and mineral,\nI know the kings of England, and I quote the fights historical"
+      + ",\nFrom Marathon to Waterloo, in order categorical.\n";
+    // Increase the text lengths by 1024 times to ensure a timeout.
+    for (let i = 0; i < 10; i++)
+    {
+      a += a;
+      b += b;
+    }
+    const startTime = Date.now();
+    dmp.diff_main(a, b);
+    const endTime = Date.now();
+    // Test that we took at least the timeout period.
+    expect(dmp.Diff_Timeout * 1000 <= endTime - startTime).toBe(true);
+    // Test that we didn't take forever (be forgiving).
+    // Theoretically this test could fail very occasionally if the
+    // OS task swaps or locks up for a second at the wrong moment.
+    expect(dmp.Diff_Timeout * 1000 * 2 > endTime - startTime).toBe(true);
+    dmp.Diff_Timeout = 0;
+
+    // Test the linemode speedup.
+    // Must be long to pass the 100 char cutoff.
+    // Simple line-mode.
+    a = "1234567890\n1234567890\n1234567890\n1234567890\n1234567890\n1234567890\n1234567890\n1234567890\n1234567890\n1234567890\n1234567890\n1234567890\n1234567890\n";
+    b = "abcdefghij\nabcdefghij\nabcdefghij\nabcdefghij\nabcdefghij\nabcdefghij\nabcdefghij\nabcdefghij\nabcdefghij\nabcdefghij\nabcdefghij\nabcdefghij\nabcdefghij\n";
+    expect(dmp.diff_main(a, b, false)).toStrictEqual(dmp.diff_main(a, b, true));
+
+    // Single line-mode.
+    a = "1234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890";
+    b = "abcdefghijabcdefghijabcdefghijabcdefghijabcdefghijabcdefghijabcdefghijabcdefghijabcdefghijabcdefghijabcdefghijabcdefghijabcdefghij";
+    expect(dmp.diff_main(a, b, false)).toStrictEqual(dmp.diff_main(a, b, true));
+
+    // Overlap line-mode.
+    function diff_rebuildtexts(diffs: Diff[])
+    {
+      // Construct the two texts which made up the diff originally.
+      let text1 = "";
+      let text2 = "";
+      for (let x = 0; x < diffs.length; x++)
+      {
+        if (diffs[x][0] !== DiffOperation.DIFF_INSERT)
+        {
+          text1 += diffs[x][1];
+        }
+        if (diffs[x][0] !== DiffOperation.DIFF_DELETE)
+        {
+          text2 += diffs[x][1];
+        }
+      }
+      return [text1, text2];
+    }
+
+    a = "1234567890\n1234567890\n1234567890\n1234567890\n1234567890\n1234567890\n1234567890\n1234567890\n1234567890\n1234567890\n1234567890\n1234567890\n1234567890\n";
+    b = "abcdefghij\n1234567890\n1234567890\n1234567890\nabcdefghij\n1234567890\n1234567890\n1234567890\nabcdefghij\n1234567890\n1234567890\n1234567890\nabcdefghij\n";
+    const textsLinemode = diff_rebuildtexts(dmp.diff_main(a, b, true));
+    const textsTextmode = diff_rebuildtexts(dmp.diff_main(a, b, false));
+    expect(textsTextmode).toStrictEqual(textsLinemode);
+
+    // Test null inputs.
+    try
+    {
+      dmp.diff_main(null as any, null as any);
+      fail("Should generates error of null inputs");
+    }
+    catch (e)
+    {
+      // Exception expected.
+      expect(e.message).toEqual("Null input. (diff_main)");
+    }
+  });
   //#endregion DIFF TEST FUNCTIONS
 
   //#region MATCH TEST FUNCTIONS
