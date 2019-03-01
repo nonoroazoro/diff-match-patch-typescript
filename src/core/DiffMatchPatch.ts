@@ -6,7 +6,7 @@ import
     NON_ALPHA_NUMERIC_REGEX,
     WHITESPACE_REGEX
 } from "../constants";
-import { Diff, DiffOperation, HalfMatchArray } from "../types";
+import { Diff, DiffOperation, HalfMatchArray, PatchApplyArray } from "../types";
 import { math } from "../utils";
 import { PatchObject } from "./PatchObject";
 
@@ -1220,10 +1220,10 @@ export class DiffMatchPatch
      *
      * @param {PatchObject[]} patches Array of Patch objects.
      * @param {string} text Old text.
-     * @returns {[string, boolean[]]} Two element Array, containing the
+     * @returns {PatchApplyArray} Two element Array, containing the
      * new text and an array of boolean values.
      */
-    public patch_apply(patches: PatchObject[], text: string): [string, boolean[]]
+    public patch_apply(patches: PatchObject[], text: string): PatchApplyArray
     {
         if (patches.length === 0)
         {
