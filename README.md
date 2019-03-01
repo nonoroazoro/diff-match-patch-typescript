@@ -11,4 +11,4 @@ npm install --save diff-match-patch-typescript
 
 ## Documentation
 
-[Official Repository](https://github.com/google/diff-match-patch)
+[Official Repository](https://github.com/google/diff-match-patch).
