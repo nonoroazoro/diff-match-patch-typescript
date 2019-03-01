@@ -808,6 +808,16 @@ describe("diff-match-patch-ts - core/DiffMatchPatch", () =>
   //#endregion DIFF TEST FUNCTIONS
 
   //#region MATCH TEST FUNCTIONS
+  it("MATCH - Alphabet", () =>
+  {
+    // Initialize the bitmasks for Bitap.
+
+    // Unique.
+    expect({ a: 4, b: 2, c: 1 }).toStrictEqual(dmp["match_alphabet_"]("abc"));
+
+    // Duplicates.
+    expect({ a: 37, b: 18, c: 8 }).toStrictEqual(dmp["match_alphabet_"]("abcaba"));
+  });
   //#endregion MATCH TEST FUNCTIONS
 
   //#region PATCH TEST FUNCTIONS
