@@ -869,13 +869,13 @@ describe("diff-match-patch-ts - core/DiffMatchPatch", () =>
   {
     // Full match.
     // Shortcut matches.
-    expect(0).toEqual(dmp.match_main('abcdef', 'abcdef', 1000));
+    expect(0).toEqual(dmp.match_main("abcdef", "abcdef", 1000));
 
-    expect(-1).toEqual(dmp.match_main('', 'abcdef', 1));
+    expect(-1).toEqual(dmp.match_main("", "abcdef", 1));
 
-    expect(3).toEqual(dmp.match_main('abcdef', '', 3));
+    expect(3).toEqual(dmp.match_main("abcdef", "", 3));
 
-    expect(3).toEqual(dmp.match_main('abcdef', 'de', 3));
+    expect(3).toEqual(dmp.match_main("abcdef", "de", 3));
 
     // Beyond end match.
     expect(3).toEqual(dmp.match_main("abcdef", "defy", 4));
@@ -884,7 +884,7 @@ describe("diff-match-patch-ts - core/DiffMatchPatch", () =>
     expect(0).toEqual(dmp.match_main("abcdef", "abcdefy", 0));
 
     // Complex match.
-    expect(4).toEqual(dmp.match_main('I am the very model of a modern major general.', ' that berry ', 5));
+    expect(4).toEqual(dmp.match_main("I am the very model of a modern major general.", " that berry ", 5));
 
     // Test null inputs.
     try
@@ -901,5 +901,41 @@ describe("diff-match-patch-ts - core/DiffMatchPatch", () =>
   //#endregion MATCH TEST FUNCTIONS
 
   //#region PATCH TEST FUNCTIONS
+  it("PATCH - From Text", () =>
+  {
+    expect([]).toStrictEqual(dmp.patch_fromText(null as any));
+
+    const strp = "@@ -21,18 +22,17 @@\n jump\n-s\n+ed\n  over \n-the\n+a\n %0Alaz\n";
+    expect(strp).toEqual(dmp.patch_fromText(strp)[0].toString());
+
+    expect("@@ -1 +1 @@\n-a\n+b\n").toEqual(dmp.patch_fromText("@@ -1 +1 @@\n-a\n+b\n")[0].toString());
+
+    expect("@@ -1,3 +0,0 @@\n-abc\n").toEqual(dmp.patch_fromText("@@ -1,3 +0,0 @@\n-abc\n")[0].toString());
+
+    expect("@@ -0,0 +1,3 @@\n+abc\n").toEqual(dmp.patch_fromText("@@ -0,0 +1,3 @@\n+abc\n")[0].toString());
+
+    // Generates error.
+    try
+    {
+      dmp.patch_fromText("Bad\nPatch\n");
+      fail("Should generates error");
+    }
+    catch (e)
+    {
+      // Exception expected.
+      expect(e.message).toEqual("Invalid patch string: Bad");
+    }
+  });
+
+  it("PATCH - To Text", () =>
+  {
+    let strp = "@@ -21,18 +22,17 @@\n jump\n-s\n+ed\n  over \n-the\n+a\n  laz\n";
+    let p = dmp.patch_fromText(strp);
+    expect(strp).toEqual(dmp.patch_toText(p));
+
+    strp = "@@ -1,9 +1,9 @@\n-f\n+F\n oo+fooba\n@@ -7,9 +7,9 @@\n obar\n-,\n+.\n  tes\n";
+    p = dmp.patch_fromText(strp);
+    expect(strp).toEqual(dmp.patch_toText(p));
+  });
   //#endregion PATCH TEST FUNCTIONS
 });
