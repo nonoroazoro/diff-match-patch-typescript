@@ -46,30 +46,30 @@ export class DiffMatchPatch
     // Redefine these in your program to override the defaults.
 
     // Number of seconds to map a diff before giving up (0 for infinity).
-    public Diff_Timeout = 1.0;
+    public diffTimeout = 1.0;
 
     // Cost of an empty edit operation in terms of edit characters.
-    public Diff_EditCost = 4;
+    public diffEditCost = 4;
 
     // At what point is no match declared (0.0 = perfection, 1.0 = very loose).
-    public Match_Threshold = 0.5;
+    public matchThreshold = 0.5;
 
     // How far to search for a match (0 = exact location, 1000+ = broad match).
     // A match this many characters away from the expected location will add
     // 1.0 to the score (0.0 is a perfect match).
-    public Match_Distance = 1000;
+    public matchDistance = 1000;
 
     // When deleting a large block of text (over ~64 characters), how close do
     // the contents have to be to match the expected contents. (0.0 = perfection,
     // 1.0 = very loose). Note that Match_Threshold controls how closely the
     // end points of a delete need to match.
-    public Patch_DeleteThreshold = 0.5;
+    public patchDeleteThreshold = 0.5;
 
     // Chunk size for context length.
-    public Patch_Margin = 4;
+    public patchMargin = 4;
 
     // The number of bits in an int.
-    public Match_MaxBits = 32;
+    public matchMaxBits = 32;
 
     //#region DIFF FUNCTIONS (public)
     /**
@@ -91,13 +91,13 @@ export class DiffMatchPatch
         // Set a deadline by which time the diff must be complete.
         if (typeof opt_deadline === "undefined")
         {
-            if (this.Diff_Timeout <= 0)
+            if (this.diffTimeout <= 0)
             {
                 opt_deadline = Number.MAX_VALUE;
             }
             else
             {
-                opt_deadline = Date.now() + this.Diff_Timeout * 1000;
+                opt_deadline = Date.now() + this.diffTimeout * 1000;
             }
         }
         const deadline = opt_deadline;
@@ -482,7 +482,7 @@ export class DiffMatchPatch
             if (diffs[pointer][0] === DiffOperation.DIFF_EQUAL)
             {
                 // Equality found.
-                if (diffs[pointer][1].length < this.Diff_EditCost &&
+                if (diffs[pointer][1].length < this.diffEditCost &&
                     (post_ins || post_del))
                 {
                     // Candidate found.
@@ -522,7 +522,7 @@ export class DiffMatchPatch
                     (
                         (pre_ins && pre_del && post_ins && post_del) ||
                         (
-                            (lastEquality.length < this.Diff_EditCost / 2) &&
+                            (lastEquality.length < this.diffEditCost / 2) &&
                             (Number(pre_ins) + Number(pre_del) + Number(post_ins) + Number(post_del)) === 3
                         )
                     )
@@ -1135,7 +1135,7 @@ export class DiffMatchPatch
                         + postpatch_text.substring(char_count2 + diff_text.length);
                     break;
                 case DiffOperation.DIFF_EQUAL:
-                    if (diff_text.length <= 2 * this.Patch_Margin &&
+                    if (diff_text.length <= 2 * this.patchMargin &&
                         patchDiffLength &&
                         diffs.length !== x + 1)
                     {
@@ -1144,7 +1144,7 @@ export class DiffMatchPatch
                         patch.length1 += diff_text.length;
                         patch.length2 += diff_text.length;
                     }
-                    else if (diff_text.length >= 2 * this.Patch_Margin)
+                    else if (diff_text.length >= 2 * this.patchMargin)
                     {
                         // Time for a new patch.
                         if (patchDiffLength)
@@ -1246,17 +1246,17 @@ export class DiffMatchPatch
             const text1 = this.diff_text1(patches[x].diffs);
             let start_loc: number;
             let end_loc = -1;
-            if (text1.length > this.Match_MaxBits)
+            if (text1.length > this.matchMaxBits)
             {
                 // patch_splitMax will only provide an oversized pattern in the case of
                 // a monster delete.
-                start_loc = this.match_main(text, text1.substring(0, this.Match_MaxBits),
+                start_loc = this.match_main(text, text1.substring(0, this.matchMaxBits),
                     expected_loc);
                 if (start_loc !== -1)
                 {
                     end_loc = this.match_main(text,
-                        text1.substring(text1.length - this.Match_MaxBits),
-                        expected_loc + text1.length - this.Match_MaxBits);
+                        text1.substring(text1.length - this.matchMaxBits),
+                        expected_loc + text1.length - this.matchMaxBits);
                     if (end_loc === -1 || start_loc >= end_loc)
                     {
                         // Can't find valid trailing context.  Drop this patch.
@@ -1287,7 +1287,7 @@ export class DiffMatchPatch
                 }
                 else
                 {
-                    text2 = text.substring(start_loc, end_loc + this.Match_MaxBits);
+                    text2 = text.substring(start_loc, end_loc + this.matchMaxBits);
                 }
                 if (text1 === text2)
                 {
@@ -1301,8 +1301,8 @@ export class DiffMatchPatch
                     // Imperfect match.  Run a diff to get a framework of equivalent
                     // indices.
                     const diffs = this.diff_main(text1, text2, false);
-                    if (text1.length > this.Match_MaxBits &&
-                        this.diff_levenshtein(diffs) / text1.length > this.Patch_DeleteThreshold)
+                    if (text1.length > this.matchMaxBits &&
+                        this.diff_levenshtein(diffs) / text1.length > this.patchDeleteThreshold)
                     {
                         // The end points match, but the content is unacceptably bad.
                         results[x] = false;
@@ -1355,7 +1355,7 @@ export class DiffMatchPatch
      */
     public patch_addPadding(patches: PatchObject[]): string
     {
-        const paddingLength = this.Patch_Margin;
+        const paddingLength = this.patchMargin;
         let nullPadding = "";
         for (let x = 1; x <= paddingLength; x++)
         {
@@ -1423,7 +1423,7 @@ export class DiffMatchPatch
      */
     public patch_splitMax(patches: PatchObject[]): void
     {
-        const patch_size = this.Match_MaxBits;
+        const patch_size = this.matchMaxBits;
         for (let x = 0; x < patches.length; x++)
         {
             if (patches[x].length1 <= patch_size)
@@ -1449,7 +1449,7 @@ export class DiffMatchPatch
                     patch.diffs.push([DiffOperation.DIFF_EQUAL, precontext]);
                 }
                 while (bigpatch.diffs.length !== 0 &&
-                    patch.length1 < patch_size - this.Patch_Margin)
+                    patch.length1 < patch_size - this.patchMargin)
                 {
                     const diff_type = bigpatch.diffs[0][0];
                     let diff_text = bigpatch.diffs[0][1];
@@ -1478,7 +1478,7 @@ export class DiffMatchPatch
                         // Deletion or equality.  Only take as much as we can stomach.
                         diff_text = diff_text.substring(
                             0,
-                            patch_size - patch.length1 - this.Patch_Margin
+                            patch_size - patch.length1 - this.patchMargin
                         );
                         patch.length1 += diff_text.length;
                         start1 += diff_text.length;
@@ -1504,9 +1504,9 @@ export class DiffMatchPatch
                 }
                 // Compute the head context for the next patch.
                 precontext = this.diff_text2(patch.diffs);
-                precontext = precontext.substring(precontext.length - this.Patch_Margin);
+                precontext = precontext.substring(precontext.length - this.patchMargin);
                 // Append the end context for this patch.
-                const postcontext = this.diff_text1(bigpatch.diffs).substring(0, this.Patch_Margin);
+                const postcontext = this.diff_text1(bigpatch.diffs).substring(0, this.patchMargin);
                 if (postcontext !== "")
                 {
                     patch.length1 += postcontext.length;
@@ -2187,7 +2187,7 @@ export class DiffMatchPatch
      */
     private diff_halfMatch_(text1: string, text2: string): HalfMatchArray | null
     {
-        if (this.Diff_Timeout <= 0)
+        if (this.diffTimeout <= 0)
         {
             // Don't risk returning a non-optimal diff if we have unlimited time.
             return null;
@@ -2384,7 +2384,7 @@ export class DiffMatchPatch
      */
     private match_bitap_(text: string, pattern: string, loc: number): number
     {
-        if (pattern.length > this.Match_MaxBits)
+        if (pattern.length > this.matchMaxBits)
         {
             throw new Error("Pattern too long for this browser");
         }
@@ -2393,7 +2393,7 @@ export class DiffMatchPatch
         const s = this.match_alphabet_(pattern);
 
         // Highest score beyond which we give up.
-        let score_threshold = this.Match_Threshold;
+        let score_threshold = this.matchThreshold;
         // Is there a nearby exact match? (speedup)
         let best_loc = text.indexOf(pattern, loc);
         if (best_loc !== -1)
@@ -2506,12 +2506,12 @@ export class DiffMatchPatch
     {
         const accuracy = e / pattern.length;
         const proximity = Math.abs(loc - x);
-        if (!this.Match_Distance)
+        if (!this.matchDistance)
         {
             // Dodge divide by zero error.
             return proximity ? 1.0 : accuracy;
         }
-        return accuracy + (proximity / this.Match_Distance);
+        return accuracy + (proximity / this.matchDistance);
     }
 
     /**
@@ -2561,16 +2561,16 @@ export class DiffMatchPatch
         // Look for the first and last matches of pattern in text.  If two different
         // matches are found, increase the pattern length.
         while (text.indexOf(pattern) !== text.lastIndexOf(pattern) &&
-            pattern.length < (this.Match_MaxBits - this.Patch_Margin - this.Patch_Margin))
+            pattern.length < (this.matchMaxBits - this.patchMargin - this.patchMargin))
         {
-            padding += this.Patch_Margin;
+            padding += this.patchMargin;
             pattern = text.substring(
                 patch.start2 - padding,
                 patch.start2 + patch.length1 + padding
             );
         }
         // Add one chunk for good luck.
-        padding += this.Patch_Margin;
+        padding += this.patchMargin;
 
         // Add the prefix.
         const prefix = text.substring(patch.start2 - padding, patch.start2);

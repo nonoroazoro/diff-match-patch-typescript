@@ -83,7 +83,7 @@ describe("diff-match-patch-ts - core/DiffMatchPatch", () =>
     it("DIFF - Half Match", () =>
     {
         // Detect a halfmatch.
-        dmp.Diff_Timeout = 1;
+        dmp.diffTimeout = 1;
 
         // No match.
         expect(dmp["diff_halfMatch_"]("1234567890", "abcdef")).toBeNull();
@@ -115,7 +115,7 @@ describe("diff-match-patch-ts - core/DiffMatchPatch", () =>
             .toStrictEqual(["qHillo", "w", "x", "Hulloy", "HelloHe"]);
 
         // Optimal no halfmatch.
-        dmp.Diff_Timeout = 0;
+        dmp.diffTimeout = 0;
         expect(dmp["diff_halfMatch_"]("qHilloHelloHew", "xHelloHeHulloy")).toBeNull();
     });
 
@@ -423,7 +423,7 @@ describe("diff-match-patch-ts - core/DiffMatchPatch", () =>
     it("DIFF - Cleanup Efficiency", () =>
     {
         // Cleanup operationally trivial equalities.
-        dmp.Diff_EditCost = 4;
+        dmp.diffEditCost = 4;
 
         // Null case.
         let diffs: Diff[] = [];
@@ -471,11 +471,11 @@ describe("diff-match-patch-ts - core/DiffMatchPatch", () =>
         expect([[DiffOperation.DIFF_DELETE, "abxyzcd"], [DiffOperation.DIFF_INSERT, "12xy34z56"]]).toStrictEqual(diffs);
 
         // High cost elimination.
-        dmp.Diff_EditCost = 5;
+        dmp.diffEditCost = 5;
         diffs = [[DiffOperation.DIFF_DELETE, "ab"], [DiffOperation.DIFF_INSERT, "12"], [DiffOperation.DIFF_EQUAL, "wxyz"], [DiffOperation.DIFF_DELETE, "cd"], [DiffOperation.DIFF_INSERT, "34"]];
         dmp.diff_cleanupEfficiency(diffs);
         expect([[DiffOperation.DIFF_DELETE, "abwxyzcd"], [DiffOperation.DIFF_INSERT, "12wxyz34"]]).toStrictEqual(diffs);
-        dmp.Diff_EditCost = 4;
+        dmp.diffEditCost = 4;
     });
 
     it("DIFF - Pretty Html", () =>
@@ -674,7 +674,7 @@ describe("diff-match-patch-ts - core/DiffMatchPatch", () =>
 
         // Perform a real diff.
         // Switch off the timeout.
-        dmp.Diff_Timeout = 0;
+        dmp.diffTimeout = 0;
         // Simple cases.
         expect([[DiffOperation.DIFF_DELETE, "a"], [DiffOperation.DIFF_INSERT, "b"]]).toStrictEqual(dmp.diff_main("a", "b", false));
 
@@ -732,7 +732,7 @@ describe("diff-match-patch-ts - core/DiffMatchPatch", () =>
         ]).toStrictEqual(dmp.diff_main("a [[Pennsylvania]] and [[New", " and [[Pennsylvania]]", false));
 
         // Timeout.
-        dmp.Diff_Timeout = 0.1;  // 100ms
+        dmp.diffTimeout = 0.1;  // 100ms
         let a = "`Twas brillig, and the slithy toves\nDid gyre and gimble in the wabe:\nAll mimsy were the borogoves"
             + ",\nAnd the mome raths outgrabe.\n";
         let b = "I am the very model of a modern major general,\nI've information vegetable, animal"
@@ -748,12 +748,12 @@ describe("diff-match-patch-ts - core/DiffMatchPatch", () =>
         dmp.diff_main(a, b);
         const endTime = Date.now();
         // Test that we took at least the timeout period.
-        expect(dmp.Diff_Timeout * 1000 <= endTime - startTime).toBe(true);
+        expect(dmp.diffTimeout * 1000 <= endTime - startTime).toBe(true);
         // Test that we didn't take forever (be forgiving).
         // Theoretically this test could fail very occasionally if the
         // OS task swaps or locks up for a second at the wrong moment.
-        expect(dmp.Diff_Timeout * 1000 * 2 > endTime - startTime).toBe(true);
-        dmp.Diff_Timeout = 0;
+        expect(dmp.diffTimeout * 1000 * 2 > endTime - startTime).toBe(true);
+        dmp.diffTimeout = 0;
 
         // Test the linemode speedup.
         // Must be long to pass the 100 char cutoff.
@@ -822,8 +822,8 @@ describe("diff-match-patch-ts - core/DiffMatchPatch", () =>
     it("MATCH - Bitap", () =>
     {
         // Bitap algorithm.
-        dmp.Match_Distance = 100;
-        dmp.Match_Threshold = 0.5;
+        dmp.matchDistance = 100;
+        dmp.matchThreshold = 0.5;
         // Exact matches.
         expect(5).toEqual(dmp["match_bitap_"]("abcdefghijk", "fgh", 5));
 
@@ -840,15 +840,15 @@ describe("diff-match-patch-ts - core/DiffMatchPatch", () =>
         expect(2).toEqual(dmp["match_bitap_"]("123456789xx0", "3456789x0", 2));
 
         // Threshold test.
-        dmp.Match_Threshold = 0.4;
+        dmp.matchThreshold = 0.4;
         expect(4).toEqual(dmp["match_bitap_"]("abcdefghijk", "efxyhi", 1));
 
-        dmp.Match_Threshold = 0.3;
+        dmp.matchThreshold = 0.3;
         expect(-1).toEqual(dmp["match_bitap_"]("abcdefghijk", "efxyhi", 1));
 
-        dmp.Match_Threshold = 0.0;
+        dmp.matchThreshold = 0.0;
         expect(1).toEqual(dmp["match_bitap_"]("abcdefghijk", "bcdef", 1));
-        dmp.Match_Threshold = 0.5;
+        dmp.matchThreshold = 0.5;
 
         // Multiple select.
         expect(0).toEqual(dmp["match_bitap_"]("abcdexyzabcde", "abccde", 3));
@@ -856,12 +856,12 @@ describe("diff-match-patch-ts - core/DiffMatchPatch", () =>
         expect(8).toEqual(dmp["match_bitap_"]("abcdexyzabcde", "abccde", 5));
 
         // Distance test.
-        dmp.Match_Distance = 10;  // Strict location.
+        dmp.matchDistance = 10;  // Strict location.
         expect(-1).toEqual(dmp["match_bitap_"]("abcdefghijklmnopqrstuvwxyz", "abcdefg", 24));
 
         expect(0).toEqual(dmp["match_bitap_"]("abcdefghijklmnopqrstuvwxyz", "abcdxxefg", 1));
 
-        dmp.Match_Distance = 1000;  // Loose location.
+        dmp.matchDistance = 1000;  // Loose location.
         expect(0).toEqual(dmp["match_bitap_"]("abcdefghijklmnopqrstuvwxyz", "abcdefg", 24));
     });
 
@@ -940,7 +940,7 @@ describe("diff-match-patch-ts - core/DiffMatchPatch", () =>
 
     it("PATCH - Add Context", () =>
     {
-        dmp.Patch_Margin = 4;
+        dmp.patchMargin = 4;
         let p = dmp.patch_fromText("@@ -21,4 +21,10 @@\n-jump\n+somersault\n")[0];
         dmp["patch_addContext_"](p, "The quick brown fox jumps over the lazy dog.");
         expect("@@ -17,12 +17,18 @@\n fox \n-jump\n+somersault\n s ov\n").toEqual(p.toString());
@@ -1086,9 +1086,9 @@ describe("diff-match-patch-ts - core/DiffMatchPatch", () =>
 
     it("PATCH - Apply", () =>
     {
-        dmp.Match_Distance = 1000;
-        dmp.Match_Threshold = 0.5;
-        dmp.Patch_DeleteThreshold = 0.5;
+        dmp.matchDistance = 1000;
+        dmp.matchThreshold = 0.5;
+        dmp.patchDeleteThreshold = 0.5;
 
         // Null case.
         let patches = dmp.patch_make("", "");
@@ -1119,20 +1119,20 @@ describe("diff-match-patch-ts - core/DiffMatchPatch", () =>
         expect(["xabc12345678901234567890---------------++++++++++---------------12345678901234567890y", [false, true]]).toStrictEqual(results);
 
         // Big delete, big change 2.
-        dmp.Patch_DeleteThreshold = 0.6;
+        dmp.patchDeleteThreshold = 0.6;
         patches = dmp.patch_make("x1234567890123456789012345678901234567890123456789012345678901234567890y", "xabcy");
         results = dmp.patch_apply(patches, "x12345678901234567890---------------++++++++++---------------12345678901234567890y");
         expect(["xabcy", [true, true]]).toStrictEqual(results);
-        dmp.Patch_DeleteThreshold = 0.5;
+        dmp.patchDeleteThreshold = 0.5;
 
         // Compensate for failed patch.
-        dmp.Match_Threshold = 0.0;
-        dmp.Match_Distance = 0;
+        dmp.matchThreshold = 0.0;
+        dmp.matchDistance = 0;
         patches = dmp.patch_make("abcdefghijklmnopqrstuvwxyz--------------------1234567890", "abcXXXXXXXXXXdefghijklmnopqrstuvwxyz--------------------1234567YYYYYYYYYY890");
         results = dmp.patch_apply(patches, "ABCDEFGHIJKLMNOPQRSTUVWXYZ--------------------1234567890");
         expect(["ABCDEFGHIJKLMNOPQRSTUVWXYZ--------------------1234567YYYYYYYYYY890", [false, true]]).toStrictEqual(results);
-        dmp.Match_Threshold = 0.5;
-        dmp.Match_Distance = 1000;
+        dmp.matchThreshold = 0.5;
+        dmp.matchDistance = 1000;
 
         // No side effects.
         patches = dmp.patch_make("", "test");
