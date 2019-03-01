@@ -5,6 +5,7 @@
     "license": "Apache-2.0",
     "main": "dist/lib/index.js",
     "module": "dist/es/index.js",
+    "types": "dist/types/index.d.ts",
     "author": {
         "email": "xiaochao.k@gmail.com",
         "name": "nonoroazoro",
@@ -24,7 +25,8 @@
         "build:prod": "cross-env NODE_ENV=production webpack --config ./scripts/webpack/webpack.config.prod.js",
         "test": "jest --config ./scripts/jest/jest.config.js",
         "test:watch": "jest --config ./scripts/jest/jest.config.js --watch --verbose false",
-        "test:cov": "npm run cleanCov && npm test -- --coverage"
+        "test:cov": "npm run cleanCov && npm test -- --coverage",
+        "publish": "npm run build && npm publish"
     },
     "devDependencies": {
         "@types/jest": "^24.0.9",
@@ -49,5 +51,8 @@
             "tslint",
             "git add"
         ]
-    }
+    },
+    "files": [
+        "dist"
+    ]
 }
