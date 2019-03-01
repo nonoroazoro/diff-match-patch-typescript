@@ -967,7 +967,7 @@ export class DiffMatchPatch
         {
             throw new Error(
                 "Delta length (" + pointer + ") does not equal source text length ("
-                + text1.length + ")."
+                + text1.length + ")"
             );
         }
         return diffs;
@@ -1091,7 +1091,7 @@ export class DiffMatchPatch
         }
         else
         {
-            throw new Error("Unknown call format to patch_make.");
+            throw new Error("Unknown call format to patch_make");
         }
 
         if (diffs.length === 0)
@@ -2386,7 +2386,7 @@ export class DiffMatchPatch
     {
         if (pattern.length > this.Match_MaxBits)
         {
-            throw new Error("Pattern too long for this browser.");
+            throw new Error("Pattern too long for this browser");
         }
 
         // Initialize the alphabet.
