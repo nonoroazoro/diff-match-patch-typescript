@@ -419,6 +419,181 @@ describe("diff-match-patch-ts - core/DiffMatchPatch", () =>
       [DiffOperation.DIFF_INSERT, "BC"]
     ]).toStrictEqual(diffs);
   });
+
+  it("DIFF - Cleanup Efficiency", () =>
+  {
+    // Cleanup operationally trivial equalities.
+    dmp.Diff_EditCost = 4;
+
+    // Null case.
+    let diffs: Diff[] = [];
+    dmp.diff_cleanupEfficiency(diffs);
+    expect([]).toStrictEqual(diffs);
+
+    // No elimination.
+    diffs = [
+      [DiffOperation.DIFF_DELETE, "ab"],
+      [DiffOperation.DIFF_INSERT, "12"],
+      [DiffOperation.DIFF_EQUAL, "wxyz"],
+      [DiffOperation.DIFF_DELETE, "cd"],
+      [DiffOperation.DIFF_INSERT, "34"]
+    ];
+    dmp.diff_cleanupEfficiency(diffs);
+    expect([
+      [DiffOperation.DIFF_DELETE, "ab"],
+      [DiffOperation.DIFF_INSERT, "12"],
+      [DiffOperation.DIFF_EQUAL, "wxyz"],
+      [DiffOperation.DIFF_DELETE, "cd"],
+      [DiffOperation.DIFF_INSERT, "34"]
+    ]).toStrictEqual(diffs);
+
+    // Four-edit elimination.
+    diffs = [[DiffOperation.DIFF_DELETE, "ab"], [DiffOperation.DIFF_INSERT, "12"], [DiffOperation.DIFF_EQUAL, "xyz"], [DiffOperation.DIFF_DELETE, "cd"], [DiffOperation.DIFF_INSERT, "34"]];
+    dmp.diff_cleanupEfficiency(diffs);
+    expect([[DiffOperation.DIFF_DELETE, "abxyzcd"], [DiffOperation.DIFF_INSERT, "12xyz34"]]).toStrictEqual(diffs);
+
+    // Three-edit elimination.
+    diffs = [[DiffOperation.DIFF_INSERT, "12"], [DiffOperation.DIFF_EQUAL, "x"], [DiffOperation.DIFF_DELETE, "cd"], [DiffOperation.DIFF_INSERT, "34"]];
+    dmp.diff_cleanupEfficiency(diffs);
+    expect([[DiffOperation.DIFF_DELETE, "xcd"], [DiffOperation.DIFF_INSERT, "12x34"]]).toStrictEqual(diffs);
+
+    // Backpass elimination.
+    diffs = [
+      [DiffOperation.DIFF_DELETE, "ab"],
+      [DiffOperation.DIFF_INSERT, "12"],
+      [DiffOperation.DIFF_EQUAL, "xy"],
+      [DiffOperation.DIFF_INSERT, "34"],
+      [DiffOperation.DIFF_EQUAL, "z"],
+      [DiffOperation.DIFF_DELETE, "cd"],
+      [DiffOperation.DIFF_INSERT, "56"]
+    ];
+    dmp.diff_cleanupEfficiency(diffs);
+    expect([[DiffOperation.DIFF_DELETE, "abxyzcd"], [DiffOperation.DIFF_INSERT, "12xy34z56"]]).toStrictEqual(diffs);
+
+    // High cost elimination.
+    dmp.Diff_EditCost = 5;
+    diffs = [[DiffOperation.DIFF_DELETE, "ab"], [DiffOperation.DIFF_INSERT, "12"], [DiffOperation.DIFF_EQUAL, "wxyz"], [DiffOperation.DIFF_DELETE, "cd"], [DiffOperation.DIFF_INSERT, "34"]];
+    dmp.diff_cleanupEfficiency(diffs);
+    expect([[DiffOperation.DIFF_DELETE, "abwxyzcd"], [DiffOperation.DIFF_INSERT, "12wxyz34"]]).toStrictEqual(diffs);
+    dmp.Diff_EditCost = 4;
+  });
+
+  it("DIFF - Pretty Html", () =>
+  {
+    // Pretty print.
+    const diffs: Diff[] = [[DiffOperation.DIFF_EQUAL, "a\n"], [DiffOperation.DIFF_DELETE, "<B>b</B>"], [DiffOperation.DIFF_INSERT, "c&d"]];
+    expect('<span>a&para;<br></span><del style="background:#ffe6e6;">&lt;B&gt;b&lt;/B&gt;</del><ins style="background:#e6ffe6;">c&amp;d</ins>').toStrictEqual(dmp.diff_prettyHtml(diffs));
+  });
+
+  it("DIFF - Text", () =>
+  {
+    // Compute the source and destination texts.
+    const diffs: Diff[] = [
+      [DiffOperation.DIFF_EQUAL, "jump"],
+      [DiffOperation.DIFF_DELETE, "s"],
+      [DiffOperation.DIFF_INSERT, "ed"],
+      [DiffOperation.DIFF_EQUAL, " over "],
+      [DiffOperation.DIFF_DELETE, "the"],
+      [DiffOperation.DIFF_INSERT, "a"],
+      [DiffOperation.DIFF_EQUAL, " lazy"]
+    ];
+    expect("jumps over the lazy").toStrictEqual(dmp.diff_text1(diffs));
+    expect("jumped over a lazy").toStrictEqual(dmp.diff_text2(diffs));
+  });
+
+  it("DIFF - Delta", () =>
+  {
+    // Convert a diff into delta string.
+    let diffs: Diff[] = [
+      [DiffOperation.DIFF_EQUAL, "jump"],
+      [DiffOperation.DIFF_DELETE, "s"],
+      [DiffOperation.DIFF_INSERT, "ed"],
+      [DiffOperation.DIFF_EQUAL, " over "],
+      [DiffOperation.DIFF_DELETE, "the"],
+      [DiffOperation.DIFF_INSERT, "a"],
+      [DiffOperation.DIFF_EQUAL, " lazy"],
+      [DiffOperation.DIFF_INSERT, "old dog"]
+    ];
+    let text1 = dmp.diff_text1(diffs);
+    expect("jumps over the lazy").toEqual(text1);
+
+    let delta = dmp.diff_toDelta(diffs);
+    expect("=4\t-1\t+ed\t=6\t-3\t+a\t=5\t+old dog").toEqual(delta);
+
+    // Convert delta string into a diff.
+    expect(dmp.diff_fromDelta(text1, delta)).toStrictEqual(diffs);
+
+    // Generates error (19 != 20).
+    try
+    {
+      dmp.diff_fromDelta(text1 + "x", delta);
+      fail("Should generates error (19 != 20)");
+    }
+    catch (e)
+    {
+      // Exception expected.
+      expect(e.message).toEqual("Delta length (19) does not equal source text length (20)");
+    }
+
+    // Generates error (19 != 18).
+    try
+    {
+      dmp.diff_fromDelta(text1.substring(1), delta);
+      fail("Should generates error (19 != 18)");
+    }
+    catch (e)
+    {
+      // Exception expected.
+      expect(e.message).toEqual("Delta length (19) does not equal source text length (18)");
+    }
+
+    // Generates error (%c3%xy invalid Unicode).
+    try
+    {
+      dmp.diff_fromDelta("", "+%c3%xy");
+      fail("Should generates error (%c3%xy invalid Unicode)");
+    }
+    catch (e)
+    {
+      // Exception expected.
+      expect(e.message).toEqual("Illegal escape in diff_fromDelta: %c3%xy");
+    }
+
+    // Test deltas with special characters.
+    diffs = [[DiffOperation.DIFF_EQUAL, "\u0680 \x00 \t %"], [DiffOperation.DIFF_DELETE, "\u0681 \x01 \n ^"], [DiffOperation.DIFF_INSERT, "\u0682 \x02 \\ |"]];
+    text1 = dmp.diff_text1(diffs);
+    expect("\u0680 \x00 \t %\u0681 \x01 \n ^").toEqual(text1);
+
+    delta = dmp.diff_toDelta(diffs);
+    expect("=7\t-7\t+%DA%82 %02 %5C %7C").toEqual(delta);
+
+    // Convert delta string into a diff.
+    expect(dmp.diff_fromDelta(text1, delta)).toStrictEqual(diffs);
+
+    // Verify pool of unchanged characters.
+    diffs = [[DiffOperation.DIFF_INSERT, "A-Z a-z 0-9 - _ . ! ~ * ' ( ) ; / ? : @ & = + $ , # "]];
+    const text2 = dmp.diff_text2(diffs);
+    expect("A-Z a-z 0-9 - _ . ! ~ * ' ( ) ; / ? : @ & = + $ , # ").toEqual(text2);
+
+    delta = dmp.diff_toDelta(diffs);
+    expect("+A-Z a-z 0-9 - _ . ! ~ * ' ( ) ; / ? : @ & = + $ , # ").toEqual(delta);
+
+    // Convert delta string into a diff.
+    expect(dmp.diff_fromDelta("", delta)).toStrictEqual(diffs);
+
+    // 160 kb string.
+    let a = "abcdefghij";
+    for (let i = 0; i < 14; i++)
+    {
+      a += a;
+    }
+    diffs = [[DiffOperation.DIFF_INSERT, a]];
+    delta = dmp.diff_toDelta(diffs);
+    expect("+" + a).toEqual(delta);
+
+    // Convert delta string into a diff.
+    expect(dmp.diff_fromDelta("", delta)).toStrictEqual(diffs);
+  });
   //#endregion DIFF TEST FUNCTIONS
 
   //#region MATCH TEST FUNCTIONS
