@@ -2551,7 +2551,7 @@ export class DiffMatchPatch
         {
             return;
         }
-        if (patch.start2 === null)
+        if (patch.start2 == null)
         {
             throw Error("patch not initialized");
         }
