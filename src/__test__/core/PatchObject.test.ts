@@ -23,7 +23,7 @@ import { DiffOperation } from "../../types";
 
 describe("diff-match-patch-ts - core/PatchObject", () =>
 {
-  it("DIFF - Common Prefix", () =>
+  it("PatchObject", () =>
   {
     // Patch Object.
     const p = new PatchObject();
