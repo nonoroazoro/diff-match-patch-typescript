@@ -1,5 +1,5 @@
 {
-    "name": "diff-match-patch-ts",
+    "name": "diff-match-patch-typescript",
     "version": "1.0.0",
     "description": "TypeScript port of diff-match-patch.",
     "license": "Apache-2.0",
@@ -13,7 +13,7 @@
     },
     "repository": {
         "type": "git",
-        "url": "https://github.com/nonoroazoro/diff-match-patch-ts"
+        "url": "https://github.com/nonoroazoro/diff-match-patch-typescript"
     },
     "scripts": {
         "clean": "rimraf dist/*",
