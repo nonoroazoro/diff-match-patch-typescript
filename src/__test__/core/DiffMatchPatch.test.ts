@@ -605,6 +605,18 @@ describe("diff-match-patch-ts - core/DiffMatchPatch", () =>
     // Translation on deletion.
     expect(dmp.diff_xIndex([[DiffOperation.DIFF_EQUAL, "a"], [DiffOperation.DIFF_DELETE, "1234"], [DiffOperation.DIFF_EQUAL, "xyz"]], 3)).toBe(1);
   });
+
+  it("DIFF - Levenshtein", () =>
+  {
+    // Levenshtein with trailing equality.
+    expect(dmp.diff_levenshtein([[DiffOperation.DIFF_DELETE, "abc"], [DiffOperation.DIFF_INSERT, "1234"], [DiffOperation.DIFF_EQUAL, "xyz"]])).toBe(4);
+
+    // Levenshtein with leading equality.
+    expect(dmp.diff_levenshtein([[DiffOperation.DIFF_EQUAL, "xyz"], [DiffOperation.DIFF_DELETE, "abc"], [DiffOperation.DIFF_INSERT, "1234"]])).toBe(4);
+
+    // Levenshtein with middle equality.
+    expect(dmp.diff_levenshtein([[DiffOperation.DIFF_DELETE, "abc"], [DiffOperation.DIFF_EQUAL, "xyz"], [DiffOperation.DIFF_INSERT, "1234"]])).toBe(7);
+  });
   //#endregion DIFF TEST FUNCTIONS
 
   //#region MATCH TEST FUNCTIONS
