@@ -818,6 +818,86 @@ describe("diff-match-patch-ts - core/DiffMatchPatch", () =>
     // Duplicates.
     expect({ a: 37, b: 18, c: 8 }).toStrictEqual(dmp["match_alphabet_"]("abcaba"));
   });
+
+  it("MATCH - Bitap", () =>
+  {
+    // Bitap algorithm.
+    dmp.Match_Distance = 100;
+    dmp.Match_Threshold = 0.5;
+    // Exact matches.
+    expect(5).toEqual(dmp["match_bitap_"]("abcdefghijk", "fgh", 5));
+
+    expect(5).toEqual(dmp["match_bitap_"]("abcdefghijk", "fgh", 0));
+
+    // Fuzzy matches.
+    expect(4).toEqual(dmp["match_bitap_"]("abcdefghijk", "efxhi", 0));
+
+    expect(2).toEqual(dmp["match_bitap_"]("abcdefghijk", "cdefxyhijk", 5));
+
+    expect(-1).toEqual(dmp["match_bitap_"]("abcdefghijk", "bxy", 1));
+
+    // Overflow.
+    expect(2).toEqual(dmp["match_bitap_"]("123456789xx0", "3456789x0", 2));
+
+    // Threshold test.
+    dmp.Match_Threshold = 0.4;
+    expect(4).toEqual(dmp["match_bitap_"]("abcdefghijk", "efxyhi", 1));
+
+    dmp.Match_Threshold = 0.3;
+    expect(-1).toEqual(dmp["match_bitap_"]("abcdefghijk", "efxyhi", 1));
+
+    dmp.Match_Threshold = 0.0;
+    expect(1).toEqual(dmp["match_bitap_"]("abcdefghijk", "bcdef", 1));
+    dmp.Match_Threshold = 0.5;
+
+    // Multiple select.
+    expect(0).toEqual(dmp["match_bitap_"]("abcdexyzabcde", "abccde", 3));
+
+    expect(8).toEqual(dmp["match_bitap_"]("abcdexyzabcde", "abccde", 5));
+
+    // Distance test.
+    dmp.Match_Distance = 10;  // Strict location.
+    expect(-1).toEqual(dmp["match_bitap_"]("abcdefghijklmnopqrstuvwxyz", "abcdefg", 24));
+
+    expect(0).toEqual(dmp["match_bitap_"]("abcdefghijklmnopqrstuvwxyz", "abcdxxefg", 1));
+
+    dmp.Match_Distance = 1000;  // Loose location.
+    expect(0).toEqual(dmp["match_bitap_"]("abcdefghijklmnopqrstuvwxyz", "abcdefg", 24));
+  });
+
+  it("MATCH - Main", () =>
+  {
+    // Full match.
+    // Shortcut matches.
+    expect(0).toEqual(dmp.match_main('abcdef', 'abcdef', 1000));
+
+    expect(-1).toEqual(dmp.match_main('', 'abcdef', 1));
+
+    expect(3).toEqual(dmp.match_main('abcdef', '', 3));
+
+    expect(3).toEqual(dmp.match_main('abcdef', 'de', 3));
+
+    // Beyond end match.
+    expect(3).toEqual(dmp.match_main("abcdef", "defy", 4));
+
+    // Oversized pattern.
+    expect(0).toEqual(dmp.match_main("abcdef", "abcdefy", 0));
+
+    // Complex match.
+    expect(4).toEqual(dmp.match_main('I am the very model of a modern major general.', ' that berry ', 5));
+
+    // Test null inputs.
+    try
+    {
+      dmp.match_main(null as any, null as any, 0);
+      fail("Should generates error of null inputs");
+    }
+    catch (e)
+    {
+      // Exception expected.
+      expect(e.message).toEqual("Null input. (match_main)");
+    }
+  });
   //#endregion MATCH TEST FUNCTIONS
 
   //#region PATCH TEST FUNCTIONS
