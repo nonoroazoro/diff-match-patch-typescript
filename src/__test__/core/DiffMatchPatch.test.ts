@@ -594,6 +594,17 @@ describe("diff-match-patch-ts - core/DiffMatchPatch", () =>
     // Convert delta string into a diff.
     expect(dmp.diff_fromDelta("", delta)).toStrictEqual(diffs);
   });
+
+  it("DIFF - XIndex", () =>
+  {
+    // Translate a location in text1 to text2.
+
+    // Translation on equality.
+    expect(dmp.diff_xIndex([[DiffOperation.DIFF_DELETE, "a"], [DiffOperation.DIFF_INSERT, "1234"], [DiffOperation.DIFF_EQUAL, "xyz"]], 2)).toBe(5);
+
+    // Translation on deletion.
+    expect(dmp.diff_xIndex([[DiffOperation.DIFF_EQUAL, "a"], [DiffOperation.DIFF_DELETE, "1234"], [DiffOperation.DIFF_EQUAL, "xyz"]], 3)).toBe(1);
+  });
   //#endregion DIFF TEST FUNCTIONS
 
   //#region MATCH TEST FUNCTIONS
