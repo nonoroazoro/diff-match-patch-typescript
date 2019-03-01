@@ -1032,16 +1032,16 @@ export class DiffMatchPatch
      *
      * @param {(string|Diff[])} a text1 (methods 1,3,4) or
      * Array of diff tuples for text1 to text2 (method 2).
-     * @param {(string|Diff[])} opt_b text2 (methods 1,4) or
+     * @param {(string|Diff[])} [opt_b] text2 (methods 1,4) or
      * Array of diff tuples for text1 to text2 (method 3) or undefined (method 2).
-     * @param {(string|Diff[])} opt_c Array of diff tuples
+     * @param {(string|Diff[])} [opt_c] Array of diff tuples
      * for text1 to text2 (method 4) or undefined (methods 1,2,3).
      * @returns {PatchObject[]} Array of Patch objects.
      */
     public patch_make(
         a: string | Diff[],
-        opt_b: string | Diff[],
-        opt_c: string | Diff[]
+        opt_b?: string | Diff[],
+        opt_c?: string | Diff[]
     ): PatchObject[]
     {
         let text1: string;
