@@ -1,8 +1,8 @@
 {
     "name": "diff-match-patch-ts",
     "version": "1.0.0",
-    "description": "Port diff-match-patch to TypeScript.",
-    "license": "MIT",
+    "description": "TypeScript port of diff-match-patch.",
+    "license": "Apache-2.0",
     "main": "dist/lib/index.js",
     "module": "dist/es/index.js",
     "author": {
@@ -38,9 +38,9 @@
         "rimraf": "^2.6.3",
         "ts-jest": "^24.0.0",
         "ts-loader": "^5.3.3",
-        "tslint": "^5.13.0",
+        "tslint": "^5.13.1",
         "typescript": "^3.3.3333",
-        "webpack": "^4.29.5",
+        "webpack": "^4.29.6",
         "webpack-bundle-analyzer": "^3.0.4",
         "webpack-cli": "^3.2.3"
     },
