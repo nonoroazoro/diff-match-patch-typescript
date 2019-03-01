@@ -25,8 +25,7 @@
         "build:prod": "cross-env NODE_ENV=production webpack --config ./scripts/webpack/webpack.config.prod.js",
         "test": "jest --config ./scripts/jest/jest.config.js",
         "test:watch": "jest --config ./scripts/jest/jest.config.js --watch --verbose false",
-        "test:cov": "npm run cleanCov && npm test -- --coverage",
-        "publish": "npm run build && npm publish"
+        "test:cov": "npm run cleanCov && npm test -- --coverage"
     },
     "devDependencies": {
         "@types/jest": "^24.0.9",
