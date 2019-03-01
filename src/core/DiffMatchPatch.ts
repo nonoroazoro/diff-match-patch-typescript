@@ -45,30 +45,44 @@ export class DiffMatchPatch
     // Defaults.
     // Redefine these in your program to override the defaults.
 
-    // Number of seconds to map a diff before giving up (0 for infinity).
+    /**
+     * Number of seconds to map a diff before giving up (0 for infinity).
+     */
     public diffTimeout = 1.0;
 
-    // Cost of an empty edit operation in terms of edit characters.
+    /**
+     * Cost of an empty edit operation in terms of edit characters.
+     */
     public diffEditCost = 4;
 
-    // At what point is no match declared (0.0 = perfection, 1.0 = very loose).
+    /**
+     * At what point is no match declared (0.0 = perfection, 1.0 = very loose).
+     */
     public matchThreshold = 0.5;
 
-    // How far to search for a match (0 = exact location, 1000+ = broad match).
-    // A match this many characters away from the expected location will add
-    // 1.0 to the score (0.0 is a perfect match).
+    /**
+     * How far to search for a match (0 = exact location, 1000+ = broad match).
+     * A match this many characters away from the expected location will add
+     * 1.0 to the score (0.0 is a perfect match).
+     */
     public matchDistance = 1000;
 
-    // When deleting a large block of text (over ~64 characters), how close do
-    // the contents have to be to match the expected contents. (0.0 = perfection,
-    // 1.0 = very loose). Note that Match_Threshold controls how closely the
-    // end points of a delete need to match.
+    /**
+     * When deleting a large block of text (over ~64 characters), how close do
+     * the contents have to be to match the expected contents. (0.0 = perfection,
+     * 1.0 = very loose). Note that Match_Threshold controls how closely the
+     * end points of a delete need to match.
+     */
     public patchDeleteThreshold = 0.5;
 
-    // Chunk size for context length.
+    /**
+     * Chunk size for context length.
+     */
     public patchMargin = 4;
 
-    // The number of bits in an int.
+    /**
+     * The number of bits in an int.
+     */
     public matchMaxBits = 32;
 
     //#region DIFF FUNCTIONS (public)
