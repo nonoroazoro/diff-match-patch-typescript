@@ -1024,5 +1024,142 @@ describe("diff-match-patch-ts - core/DiffMatchPatch", () =>
       expect(e.message).toEqual("Unknown call format to patch_make");
     }
   });
+
+  it("PATCH - Split Max", () =>
+  {
+    // Assumes that dmp.Match_MaxBits is 32.
+    let patches = dmp.patch_make("abcdefghijklmnopqrstuvwxyz01234567890", "XabXcdXefXghXijXklXmnXopXqrXstXuvXwxXyzX01X23X45X67X89X0");
+    dmp.patch_splitMax(patches);
+    expect(
+      "@@ -1,32 +1,46 @@\n+X\n ab\n+X\n cd\n+X\n ef\n+X\n gh\n+X\n ij\n+X\n "
+      + "kl\n+X\n mn\n+X\n op\n+X\n qr\n+X\n st\n+X\n uv\n+X\n wx\n+X\n yz\n+"
+      + "X\n 012345\n@@ -25,13 +39,18 @@\n zX01\n+X\n 23\n+X\n 45\n+X\n 67\n+X\n 89\n+X\n 0\n"
+    ).toEqual(dmp.patch_toText(patches));
+
+    patches = dmp.patch_make(
+      "abcdef1234567890123456789012345678901234567890123456789012345678901234567890uvwxyz",
+      "abcdefuvwxyz"
+    );
+    const oldToText = dmp.patch_toText(patches);
+    dmp.patch_splitMax(patches);
+    expect(oldToText).toEqual(dmp.patch_toText(patches));
+
+    patches = dmp.patch_make("1234567890123456789012345678901234567890123456789012345678901234567890", "abc");
+    dmp.patch_splitMax(patches);
+    expect(
+      "@@ -1,32 +1,4 @@\n-1234567890123456789012345678\n 9012\n@@ -"
+      + "29,32 +1,4 @@\n-9012345678901234567890123456\n 7890\n@@ -57"
+      + ",14 +1,3 @@\n-78901234567890\n+abc\n"
+    ).toEqual(dmp.patch_toText(patches));
+
+    patches = dmp.patch_make(
+      "abcdefghij , h : 0 , t : 1 abcdefghij , h : 0 , t : 1 abcdefghij , h : 0 , t : 1",
+      "abcdefghij , h : 1 , t : 1 abcdefghij , h : 1 , t : 1 abcdefghij , h : 0 , t : 1"
+    );
+    dmp.patch_splitMax(patches);
+    expect(
+      "@@ -2,32 +2,32 @@\n bcdefghij , h : \n-0\n+1\n  , t : 1 ab"
+      + "cdef\n@@ -29,32 +29,32 @@\n bcdefghij , h : \n-0\n+1\n  , t : 1 abcdef\n"
+    ).toEqual(dmp.patch_toText(patches));
+  });
+
+  it("PATCH - Add Padding", () =>
+  {
+    // Both edges full.
+    let patches = dmp.patch_make("", "test");
+    expect("@@ -0,0 +1,4 @@\n+test\n").toEqual(dmp.patch_toText(patches));
+    dmp.patch_addPadding(patches);
+    expect("@@ -1,8 +1,12 @@\n %01%02%03%04\n+test\n %01%02%03%04\n").toEqual(dmp.patch_toText(patches));
+
+    // Both edges partial.
+    patches = dmp.patch_make("XY", "XtestY");
+    expect("@@ -1,2 +1,6 @@\n X\n+test\n Y\n").toEqual(dmp.patch_toText(patches));
+    dmp.patch_addPadding(patches);
+    expect("@@ -2,8 +2,12 @@\n %02%03%04X\n+test\n Y%01%02%03\n").toEqual(dmp.patch_toText(patches));
+
+    // Both edges none.
+    patches = dmp.patch_make("XXXXYYYY", "XXXXtestYYYY");
+    expect("@@ -1,8 +1,12 @@\n XXXX\n+test\n YYYY\n").toEqual(dmp.patch_toText(patches));
+    dmp.patch_addPadding(patches);
+    expect("@@ -5,8 +5,12 @@\n XXXX\n+test\n YYYY\n").toEqual(dmp.patch_toText(patches));
+  });
+
+  it("PATCH - Apply", () =>
+  {
+    dmp.Match_Distance = 1000;
+    dmp.Match_Threshold = 0.5;
+    dmp.Patch_DeleteThreshold = 0.5;
+
+    // Null case.
+    let patches = dmp.patch_make("", "");
+    let results = dmp.patch_apply(patches, "Hello world.");
+    expect(["Hello world.", []]).toStrictEqual(results);
+
+    // Exact match.
+    patches = dmp.patch_make("The quick brown fox jumps over the lazy dog.", "That quick brown fox jumped over a lazy dog.");
+    results = dmp.patch_apply(patches, "The quick brown fox jumps over the lazy dog.");
+    expect(["That quick brown fox jumped over a lazy dog.", [true, true]]).toStrictEqual(results);
+
+    // Partial match.
+    results = dmp.patch_apply(patches, "The quick red rabbit jumps over the tired tiger.");
+    expect(["That quick red rabbit jumped over a tired tiger.", [true, true]]).toStrictEqual(results);
+
+    // Failed match.
+    results = dmp.patch_apply(patches, "I am the very model of a modern major general.");
+    expect(["I am the very model of a modern major general.", [false, false]]).toStrictEqual(results);
+
+    // Big delete, small change.
+    patches = dmp.patch_make("x1234567890123456789012345678901234567890123456789012345678901234567890y", "xabcy");
+    results = dmp.patch_apply(patches, "x123456789012345678901234567890-----++++++++++-----123456789012345678901234567890y");
+    expect(["xabcy", [true, true]]).toStrictEqual(results);
+
+    // Big delete, big change 1.
+    patches = dmp.patch_make("x1234567890123456789012345678901234567890123456789012345678901234567890y", "xabcy");
+    results = dmp.patch_apply(patches, "x12345678901234567890---------------++++++++++---------------12345678901234567890y");
+    expect(["xabc12345678901234567890---------------++++++++++---------------12345678901234567890y", [false, true]]).toStrictEqual(results);
+
+    // Big delete, big change 2.
+    dmp.Patch_DeleteThreshold = 0.6;
+    patches = dmp.patch_make("x1234567890123456789012345678901234567890123456789012345678901234567890y", "xabcy");
+    results = dmp.patch_apply(patches, "x12345678901234567890---------------++++++++++---------------12345678901234567890y");
+    expect(["xabcy", [true, true]]).toStrictEqual(results);
+    dmp.Patch_DeleteThreshold = 0.5;
+
+    // Compensate for failed patch.
+    dmp.Match_Threshold = 0.0;
+    dmp.Match_Distance = 0;
+    patches = dmp.patch_make("abcdefghijklmnopqrstuvwxyz--------------------1234567890", "abcXXXXXXXXXXdefghijklmnopqrstuvwxyz--------------------1234567YYYYYYYYYY890");
+    results = dmp.patch_apply(patches, "ABCDEFGHIJKLMNOPQRSTUVWXYZ--------------------1234567890");
+    expect(["ABCDEFGHIJKLMNOPQRSTUVWXYZ--------------------1234567YYYYYYYYYY890", [false, true]]).toStrictEqual(results);
+    dmp.Match_Threshold = 0.5;
+    dmp.Match_Distance = 1000;
+
+    // No side effects.
+    patches = dmp.patch_make("", "test");
+    let patchStr = dmp.patch_toText(patches);
+    dmp.patch_apply(patches, "");
+    expect(patchStr).toEqual(dmp.patch_toText(patches));
+
+    // No side effects with major delete.
+    patches = dmp.patch_make("The quick brown fox jumps over the lazy dog.", "Woof");
+    patchStr = dmp.patch_toText(patches);
+    dmp.patch_apply(patches, "The quick brown fox jumps over the lazy dog.");
+    expect(patchStr).toEqual(dmp.patch_toText(patches));
+
+    // Edge exact match.
+    patches = dmp.patch_make("", "test");
+    results = dmp.patch_apply(patches, "");
+    expect(["test", [true]]).toStrictEqual(results);
+
+    // Near edge exact match.
+    patches = dmp.patch_make("XY", "XtestY");
+    results = dmp.patch_apply(patches, "XY");
+    expect(["XtestY", [true]]).toStrictEqual(results);
+
+    // Edge partial match.
+    patches = dmp.patch_make("y", "y123");
+    results = dmp.patch_apply(patches, "x");
+    expect(["x123", [true]]).toStrictEqual(results);
+  });
   //#endregion PATCH TEST FUNCTIONS
 });
