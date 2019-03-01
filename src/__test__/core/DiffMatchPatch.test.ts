@@ -617,6 +617,26 @@ describe("diff-match-patch-ts - core/DiffMatchPatch", () =>
     // Levenshtein with middle equality.
     expect(dmp.diff_levenshtein([[DiffOperation.DIFF_DELETE, "abc"], [DiffOperation.DIFF_EQUAL, "xyz"], [DiffOperation.DIFF_INSERT, "1234"]])).toBe(7);
   });
+
+  it("DIFF - Bisect", () =>
+  {
+    // Normal.
+    const a = "cat";
+    const b = "map";
+    // Since the resulting diff hasn't been normalized, it would be ok if
+    // the insertion and deletion pairs are swapped.
+    // If the order changes, tweak this test as required.
+    expect(dmp["diff_bisect_"](a, b, Number.MAX_VALUE)).toStrictEqual([
+      [DiffOperation.DIFF_DELETE, "c"],
+      [DiffOperation.DIFF_INSERT, "m"],
+      [DiffOperation.DIFF_EQUAL, "a"],
+      [DiffOperation.DIFF_DELETE, "t"],
+      [DiffOperation.DIFF_INSERT, "p"]
+    ]);
+
+    // Timeout.
+    expect(dmp["diff_bisect_"](a, b, 0)).toStrictEqual([[DiffOperation.DIFF_DELETE, "cat"], [DiffOperation.DIFF_INSERT, "map"]]);
+  });
   //#endregion DIFF TEST FUNCTIONS
 
   //#region MATCH TEST FUNCTIONS
