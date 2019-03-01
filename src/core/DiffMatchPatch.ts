@@ -878,7 +878,7 @@ export class DiffMatchPatch
      * Crush the diff into an encoded string which describes the operations
      * required to transform text1 into text2.
      * E.g. =3\t-2\t+ing  -> Keep 3 chars, delete 2 chars, insert 'ing'.
-     * Operations are tab-separated.  Inserted text is escaped using %xx notation.
+     * Operations are tab-separated. Inserted text is escaped using %xx notation.
      *
      * @param {Diff[]} diffs Array of diff tuples.
      * @returns {string} Delta text.
@@ -1107,7 +1107,7 @@ export class DiffMatchPatch
         let charCount1 = 0;  // Number of characters into the text1 string.
         let charCount2 = 0;  // Number of characters into the text2 string.
         // Start with text1 (prepatch_text) and apply the diffs until we arrive at
-        // text2 (postpatch_text).  We recreate the patches one by one to determine
+        // text2 (postpatch_text). We recreate the patches one by one to determine
         // context info.
         let prepatchText = text1;
         let postpatchText = text1;
@@ -1215,7 +1215,7 @@ export class DiffMatchPatch
     }
 
     /**
-     * Merge a set of patches onto the text.  Return a patched text, as well
+     * Merge a set of patches onto the text. Return a patched text, as well
      * as a list of true/false values indicating which patches were applied.
      *
      * @param {PatchObject[]} patches Array of Patch objects.
@@ -1238,7 +1238,7 @@ export class DiffMatchPatch
 
         this.patch_splitMax(patches);
         // delta keeps track of the offset between the expected and actual location
-        // of the previous patch.  If there are patches expected at positions 10 and
+        // of the previous patch. If there are patches expected at positions 10 and
         // 20, but the first patch was found at 12, delta is 2 and the second patch
         // has an effective expected position of 22.
         let delta = 0;
@@ -1267,7 +1267,7 @@ export class DiffMatchPatch
                     );
                     if (endLoc === -1 || startLoc >= endLoc)
                     {
-                        // Can't find valid trailing context.  Drop this patch.
+                        // Can't find valid trailing context. Drop this patch.
                         startLoc = -1;
                     }
                 }
@@ -1278,14 +1278,14 @@ export class DiffMatchPatch
             }
             if (startLoc === -1)
             {
-                // No match found.  :(
+                // No match found. :(
                 results[x] = false;
                 // Subtract the delta for this failed patch from subsequent patches.
                 delta -= patches[x].length2 - patches[x].length1;
             }
             else
             {
-                // Found a match.  :)
+                // Found a match. :)
                 results[x] = true;
                 delta = startLoc - expectedLoc;
                 let text2;
@@ -1306,7 +1306,7 @@ export class DiffMatchPatch
                 }
                 else
                 {
-                    // Imperfect match.  Run a diff to get a framework of equivalent
+                    // Imperfect match. Run a diff to get a framework of equivalent
                     // indices.
                     const diffs = this.diff_main(text1, text2, false);
                     if (text1.length > this.matchMaxBits &&
@@ -1475,7 +1475,7 @@ export class DiffMatchPatch
                         patch.diffs[0][0] === DiffOperation.DIFF_EQUAL &&
                         diffText.length > 2 * patchSize)
                     {
-                        // This is a large deletion.  Let it pass in one chunk.
+                        // This is a large deletion. Let it pass in one chunk.
                         patch.length1 += diffText.length;
                         start1 += diffText.length;
                         empty = false;
@@ -1484,7 +1484,7 @@ export class DiffMatchPatch
                     }
                     else
                     {
-                        // Deletion or equality.  Only take as much as we can stomach.
+                        // Deletion or equality. Only take as much as we can stomach.
                         diffText = diffText.substring(
                             0,
                             patchSize - patch.length1 - this.patchMargin
@@ -2567,7 +2567,7 @@ export class DiffMatchPatch
         let pattern = text.substring(patch.start2, patch.start2 + patch.length1);
         let padding = 0;
 
-        // Look for the first and last matches of pattern in text.  If two different
+        // Look for the first and last matches of pattern in text. If two different
         // matches are found, increase the pattern length.
         while (text.indexOf(pattern) !== text.lastIndexOf(pattern) &&
             pattern.length < (this.matchMaxBits - this.patchMargin - this.patchMargin))
