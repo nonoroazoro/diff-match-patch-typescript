@@ -1,0 +1,7 @@
+﻿# Editor files
+.vscode
+
+# Node files and OS generated files are ignored by default.
+# See [files](https://docs.npmjs.com/files/package.json#files)
+# node_modules
+# .DS_Store
