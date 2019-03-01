@@ -1,10 +1,10 @@
 import
 {
-    blanklineEndRegex_,
-    blanklineStartRegex_,
-    linebreakRegex_,
-    nonAlphaNumericRegex_,
-    whitespaceRegex_
+    BLANKLINE_END_REGEX,
+    BLANKLINE_START_REGEX,
+    LINEBREAK_REGEX,
+    NON_ALPHA_NUMERIC_REGEX,
+    WHITESPACE_REGEX
 } from "../constants";
 import { Diff, DiffOperation, HalfMatchArray } from "../types";
 import { math } from "../utils";
@@ -2333,14 +2333,14 @@ export class DiffMatchPatch
         // rather than force total conformity.
         const char1 = one.charAt(one.length - 1);
         const char2 = two.charAt(0);
-        const nonAlphaNumeric1 = char1.match(nonAlphaNumericRegex_);
-        const nonAlphaNumeric2 = char2.match(nonAlphaNumericRegex_);
-        const whitespace1 = nonAlphaNumeric1 && char1.match(whitespaceRegex_);
-        const whitespace2 = nonAlphaNumeric2 && char2.match(whitespaceRegex_);
-        const lineBreak1 = whitespace1 && char1.match(linebreakRegex_);
-        const lineBreak2 = whitespace2 && char2.match(linebreakRegex_);
-        const blankLine1 = lineBreak1 && one.match(blanklineEndRegex_);
-        const blankLine2 = lineBreak2 && two.match(blanklineStartRegex_);
+        const nonAlphaNumeric1 = char1.match(NON_ALPHA_NUMERIC_REGEX);
+        const nonAlphaNumeric2 = char2.match(NON_ALPHA_NUMERIC_REGEX);
+        const whitespace1 = nonAlphaNumeric1 && char1.match(WHITESPACE_REGEX);
+        const whitespace2 = nonAlphaNumeric2 && char2.match(WHITESPACE_REGEX);
+        const lineBreak1 = whitespace1 && char1.match(LINEBREAK_REGEX);
+        const lineBreak2 = whitespace2 && char2.match(LINEBREAK_REGEX);
+        const blankLine1 = lineBreak1 && one.match(BLANKLINE_END_REGEX);
+        const blankLine2 = lineBreak2 && two.match(BLANKLINE_START_REGEX);
 
         if (blankLine1 || blankLine2)
         {

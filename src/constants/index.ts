@@ -3,8 +3,8 @@
  *
  * Ported by [xiaochao.k@gmail.com](https://github.com/nonoroazoro)
  */
-export const nonAlphaNumericRegex_: RegExp = /[^a-zA-Z0-9]/;
-export const whitespaceRegex_: RegExp = /\s/;
-export const linebreakRegex_: RegExp = /[\r\n]/;
-export const blanklineEndRegex_: RegExp = /\n\r?\n$/;
-export const blanklineStartRegex_: RegExp = /^\r?\n\r?\n/;
+export const NON_ALPHA_NUMERIC_REGEX: RegExp = /[^a-zA-Z0-9]/;
+export const WHITESPACE_REGEX: RegExp = /\s/;
+export const LINEBREAK_REGEX: RegExp = /[\r\n]/;
+export const BLANKLINE_END_REGEX: RegExp = /\n\r?\n$/;
+export const BLANKLINE_START_REGEX: RegExp = /^\r?\n\r?\n/;
