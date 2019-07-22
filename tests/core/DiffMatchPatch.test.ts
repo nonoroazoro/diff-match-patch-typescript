@@ -18,8 +18,8 @@
  * Ported by [xiaochao.k@gmail.com](https://github.com/nonoroazoro)
  */
 
-import { DiffMatchPatch } from "../../core";
-import { Diff, DiffOperation } from "../../types";
+import { DiffMatchPatch } from "../../src/core";
+import { Diff, DiffOperation } from "../../src/types";
 
 let dmp: DiffMatchPatch;
 describe("diff-match-patch-ts - core/DiffMatchPatch", () =>

@@ -18,8 +18,8 @@
  * Ported by [xiaochao.k@gmail.com](https://github.com/nonoroazoro)
  */
 
-import { PatchObject } from "../../core";
-import { DiffOperation } from "../../types";
+import { PatchObject } from "../../src/core";
+import { DiffOperation } from "../../src/types";
 
 describe("diff-match-patch-ts - core/PatchObject", () =>
 {
