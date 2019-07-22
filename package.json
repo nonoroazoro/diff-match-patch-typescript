@@ -9,7 +9,7 @@
     "author": {
         "email": "xiaochao.k@gmail.com",
         "name": "nonoroazoro",
-        "url": "http://www.alibabagroup.com/"
+        "url": "https://github.com/nonoroazoro"
     },
     "repository": {
         "type": "git",
@@ -44,12 +44,6 @@
         "webpack": "^4.36.1",
         "webpack-bundle-analyzer": "^3.3.2",
         "webpack-cli": "^3.3.6"
-    },
-    "lint-staged": {
-        "./src/**/*.ts": [
-            "tslint",
-            "git add"
-        ]
     },
     "files": [
         "dist"
