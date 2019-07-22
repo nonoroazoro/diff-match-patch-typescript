@@ -1,5 +1,10 @@
 # Changelogs
 
+## 1.0.4 - July 22, 2019
+
+- Fixed: Upgrade packages.
+
+
 ## 1.0.1 - March 01, 2019
 
 - Fixed: Fixed the definitions of public members.
