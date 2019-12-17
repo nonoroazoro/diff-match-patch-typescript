@@ -1,6 +1,6 @@
 # Changelogs
 
-## 1.0.5 - December 17, 2019
+## 1.0.6 - December 17, 2019
 
 - Fixed: Upgrade packages.
 
