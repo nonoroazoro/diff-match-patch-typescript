@@ -10,31 +10,16 @@
         "project": "./tsconfig.eslint.json"
     },
     "rules": {
-        "no-case-declarations": "off",
-        "no-prototype-builtins": "off",
+        "@typescript-eslint/naming-convention": "off",
+        "@typescript-eslint/prefer-regexp-exec": "off",
+        "@typescript-eslint/prefer-string-starts-ends-with": "off",
+        "@typescript-eslint/restrict-plus-operands": "off",
         "default-case": "off",
-        "prefer-template": "off",
-        "no-param-reassign": "off",
+        "no-case-declarations": "off",
         "no-mixed-operators": "off",
         "no-multi-assign": "off",
-        "@typescript-eslint/prefer-string-starts-ends-with": "off",
-        "@typescript-eslint/prefer-regexp-exec": "off",
-        "@typescript-eslint/naming-convention": "off",
-        "@typescript-eslint/restrict-plus-operands": "off",
-        "spaced-comment": [
-            "error",
-            "always",
-            {
-                "line": {
-                    "exceptions": ["-", "+"],
-                    "markers": ["=", "!", "#region", "#endregion"]
-                },
-                "block": {
-                    "exceptions": ["-", "+"],
-                    "markers": ["=", "!"],
-                    "balanced": true
-                }
-            }
-        ]
+        "no-param-reassign": "off",
+        "no-prototype-builtins": "off",
+        "prefer-template": "off"
     }
 }
