@@ -1,5 +1,10 @@
 # Changelogs
 
+## 1.0.7 - June 02, 2020
+
+- Fixed: Upgrade packages.
+
+
 ## 1.0.6 - December 17, 2019
 
 - Fixed: Upgrade packages.

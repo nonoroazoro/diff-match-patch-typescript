@@ -1,0 +1,40 @@
+{
+    "extends": [
+        "eslint-config-zoro/eslint",
+        "eslint-config-zoro/typescript"
+    ],
+    "env": {
+        "jest": true
+    },
+    "parserOptions": {
+        "project": "./tsconfig.eslint.json"
+    },
+    "rules": {
+        "no-case-declarations": "off",
+        "no-prototype-builtins": "off",
+        "default-case": "off",
+        "prefer-template": "off",
+        "no-param-reassign": "off",
+        "no-mixed-operators": "off",
+        "no-multi-assign": "off",
+        "@typescript-eslint/prefer-string-starts-ends-with": "off",
+        "@typescript-eslint/prefer-regexp-exec": "off",
+        "@typescript-eslint/naming-convention": "off",
+        "@typescript-eslint/restrict-plus-operands": "off",
+        "spaced-comment": [
+            "error",
+            "always",
+            {
+                "line": {
+                    "exceptions": ["-", "+"],
+                    "markers": ["=", "!", "#region", "#endregion"]
+                },
+                "block": {
+                    "exceptions": ["-", "+"],
+                    "markers": ["=", "!"],
+                    "balanced": true
+                }
+            }
+        ]
+    }
+}

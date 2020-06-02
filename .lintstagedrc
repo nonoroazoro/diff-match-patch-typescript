@@ -1,6 +1,0 @@
-{
-    "{src,tests}/**/*.{js,jsx,ts,tsx}": [
-        "tslint",
-        "git add"
-    ]
-}

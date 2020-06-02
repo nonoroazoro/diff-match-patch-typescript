@@ -1,6 +1,5 @@
 const path = require("path");
 const webpack = require("webpack");
-const ForkTsCheckerWebpackPlugin = require("fork-ts-checker-webpack-plugin");
 // const BundleAnalyzerPlugin = require("webpack-bundle-analyzer").BundleAnalyzerPlugin;
 
 const ROOT_PATH = path.resolve(__dirname, "../../");
@@ -26,6 +25,13 @@ module.exports = {
     module: {
         rules: [
             {
+                enforce: "pre",
+                test: /\.tsx?$/,
+                loader: "eslint-loader",
+                options: { cache: true },
+                exclude: /node_modules/
+            },
+            {
                 test: /\.ts$/,
                 use: [
                     "cache-loader",
@@ -42,12 +48,7 @@ module.exports = {
         ]
     },
     plugins: [
-        new ForkTsCheckerWebpackPlugin({
-            checkSyntacticErrors: true,
-            TS_CONFIG_PATH,
-            tslint: true
-        }),
-        new webpack.IgnorePlugin(/\.js\.map$/),
+        new webpack.IgnorePlugin(/\.js\.map$/)
         // new BundleAnalyzerPlugin()
     ],
     stats: {

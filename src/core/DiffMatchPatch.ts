@@ -252,12 +252,12 @@ export class DiffMatchPatch
     public diff_cleanupSemantic(diffs: Diff[]): void
     {
         let changes = false;
-        const equalities = [];  // Stack of indices where equalities are found.
-        let equalitiesLength = 0;  // Keeping our own length var is faster in JS.
+        const equalities = []; // Stack of indices where equalities are found.
+        let equalitiesLength = 0; // Keeping our own length var is faster in JS.
         let lastEquality: string | null = null;
 
         // Always equal to diffs[equalities[equalitiesLength - 1]][1]
-        let pointer = 0;  // Index of current position.
+        let pointer = 0; // Index of current position.
 
         // Number of characters that changed prior to the equality.
         let lengthInsertions1 = 0;
@@ -308,7 +308,7 @@ export class DiffMatchPatch
                     // Throw away the previous equality (it needs to be reevaluated).
                     equalitiesLength--;
                     pointer = equalitiesLength > 0 ? equalities[equalitiesLength - 1] : -1;
-                    lengthInsertions1 = 0;  // Reset the counters.
+                    lengthInsertions1 = 0; // Reset the counters.
                     lengthDeletions1 = 0;
                     lengthInsertions2 = 0;
                     lengthDeletions2 = 0;
@@ -473,12 +473,12 @@ export class DiffMatchPatch
     public diff_cleanupEfficiency(diffs: Diff[]): void
     {
         let changes = false;
-        const equalities = [];  // Stack of indices where equalities are found.
-        let equalitiesLength = 0;  // Keeping our own length var is faster in JS.
+        const equalities = []; // Stack of indices where equalities are found.
+        let equalitiesLength = 0; // Keeping our own length var is faster in JS.
         let lastEquality: string | null = null;
 
         // Always equal to diffs[equalities[equalitiesLength - 1]][1]
-        let pointer = 0;  // Index of current position.
+        let pointer = 0; // Index of current position.
 
         // Is there an insertion operation before the last equality.
         let preIns = false;
@@ -550,7 +550,7 @@ export class DiffMatchPatch
                     );
                     // Change second copy to insert.
                     diffs[equalities[equalitiesLength - 1] + 1][0] = DiffOperation.DIFF_INSERT;
-                    equalitiesLength--;  // Throw away the equality we just deleted;
+                    equalitiesLength--; // Throw away the equality we just deleted;
                     lastEquality = null;
                     if (preIns && preDel)
                     {
@@ -560,7 +560,7 @@ export class DiffMatchPatch
                     }
                     else
                     {
-                        equalitiesLength--;  // Throw away the previous equality.
+                        equalitiesLength--; // Throw away the previous equality.
                         pointer = equalitiesLength > 0 ? equalities[equalitiesLength - 1] : -1;
                         postIns = postDel = false;
                     }
@@ -683,7 +683,7 @@ export class DiffMatchPatch
         }
         if (diffs[diffs.length - 1][1] === "")
         {
-            diffs.pop();  // Remove the dummy entry at the end.
+            diffs.pop(); // Remove the dummy entry at the end.
         }
 
         // Second pass: look for single edits surrounded on both sides by equalities
@@ -792,8 +792,8 @@ export class DiffMatchPatch
         const patternPARA = /\n/g;
         for (let x = 0; x < diffs.length; x++)
         {
-            const op = diffs[x][0];    // Operation (insert, delete, equal)
-            const data = diffs[x][1];  // Text of change.
+            const op = diffs[x][0]; // Operation (insert, delete, equal)
+            const data = diffs[x][1]; // Text of change.
             const text = data.replace(patternAMP, "&amp;")
                 .replace(patternLT, "&lt;")
                 .replace(patternGT, "&gt;")
@@ -930,8 +930,8 @@ export class DiffMatchPatch
     public diff_fromDelta(text1: string, delta: string): Diff[]
     {
         const diffs: Diff[] = [];
-        let diffsLength = 0;  // Keeping our own length var is faster in JS.
-        let pointer = 0;  // Cursor in text1
+        let diffsLength = 0; // Keeping our own length var is faster in JS.
+        let pointer = 0; // Cursor in text1
         const tokens = delta.split(/\t/g);
         for (let x = 0; x < tokens.length; x++)
         {
@@ -1113,13 +1113,13 @@ export class DiffMatchPatch
 
         if (diffs.length === 0)
         {
-            return [];  // Get rid of the null case.
+            return []; // Get rid of the null case.
         }
         const patches = [];
         let patch = new PatchObject();
-        let patchDiffLength = 0;  // Keeping our own length var is faster in JS.
-        let charCount1 = 0;  // Number of characters into the text1 string.
-        let charCount2 = 0;  // Number of characters into the text2 string.
+        let patchDiffLength = 0; // Keeping our own length var is faster in JS.
+        let charCount1 = 0; // Number of characters into the text1 string.
+        let charCount2 = 0; // Number of characters into the text2 string.
         // Start with text1 (prepatch_text) and apply the diffs until we arrive at
         // text2 (postpatch_text). We recreate the patches one by one to determine
         // context info.
@@ -1352,8 +1352,7 @@ export class DiffMatchPatch
                                 // Deletion
                                 text = text.substring(0, startLoc + index2)
                                     + text.substring(startLoc
-                                        + this.diff_xIndex(diffs, index1 + mod[1].length)
-                                    );
+                                        + this.diff_xIndex(diffs, index1 + mod[1].length));
                             }
                             if (mod[0] !== DiffOperation.DIFF_DELETE)
                             {
@@ -1399,8 +1398,8 @@ export class DiffMatchPatch
         {
             // Add nullPadding equality.
             diffs.unshift([DiffOperation.DIFF_EQUAL, nullPadding]);
-            patch.start1 -= paddingLength;  // Should be 0.
-            patch.start2 -= paddingLength;  // Should be 0.
+            patch.start1 -= paddingLength; // Should be 0.
+            patch.start2 -= paddingLength; // Should be 0.
             patch.length1 += paddingLength;
             patch.length2 += paddingLength;
         }
@@ -2041,10 +2040,10 @@ export class DiffMatchPatch
      * the array of unique strings.
      * The zeroth element of the array of unique strings is intentionally blank.
      */
-    private diff_linesToChars_(text1: string, text2: string): { chars1: string; chars2: string; lineArray: string[]; }
+    private diff_linesToChars_(text1: string, text2: string): { chars1: string; chars2: string; lineArray: string[] }
     {
-        const lineArray: string[] = [];  // e.g. lineArray[4] == 'Hello\n'
-        const lineHash: Record<string, number> = {};   // e.g. lineHash['Hello\n'] == 4
+        const lineArray: string[] = []; // e.g. lineArray[4] == 'Hello\n'
+        const lineHash: Record<string, number> = {}; // e.g. lineHash['Hello\n'] == 4
 
         // '\x00' is a valid character, but various debuggers don't like it.
         // So we'll insert a junk entry to avoid generating a null character.
@@ -2219,7 +2218,7 @@ export class DiffMatchPatch
         const shorttext = text1.length > text2.length ? text2 : text1;
         if (longtext.length < 4 || shorttext.length * 2 < longtext.length)
         {
-            return null;  // Pointless.
+            return null; // Pointless.
         }
 
         // First check if the second quarter is the seed for a half-match.
