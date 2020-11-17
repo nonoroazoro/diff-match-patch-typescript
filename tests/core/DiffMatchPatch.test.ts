@@ -131,17 +131,17 @@ describe("diff-match-patch-ts - core/DiffMatchPatch", () =>
         // Convert lines down to characters.
         expectEqual(
             { chars1: "\x01\x02\x01", chars2: "\x02\x01\x02", lineArray: ["", "alpha\n", "beta\n"] },
-            dmp["diff_linesToChars_"]("alpha\nbeta\nalpha\n", "beta\nalpha\nbeta\n")
+            dmp.diff_linesToChars("alpha\nbeta\nalpha\n", "beta\nalpha\nbeta\n")
         );
 
         expectEqual(
             { chars1: "", chars2: "\x01\x02\x03\x03", lineArray: ["", "alpha\r\n", "beta\r\n", "\r\n"] },
-            dmp["diff_linesToChars_"]("", "alpha\r\nbeta\r\n\r\n\r\n")
+            dmp.diff_linesToChars("", "alpha\r\nbeta\r\n\r\n\r\n")
         );
 
         expectEqual(
             { chars1: "\x01", chars2: "\x02", lineArray: ["", "a", "b"] },
-            dmp["diff_linesToChars_"]("a", "b")
+            dmp.diff_linesToChars("a", "b")
         );
 
         // More than 256 to reveal any 8-bit limitations.
@@ -160,7 +160,7 @@ describe("diff-match-patch-ts - core/DiffMatchPatch", () =>
         lineList.unshift("");
         expectEqual(
             { chars1: chars, chars2: "", lineArray: lineList },
-            dmp["diff_linesToChars_"](lines, "")
+            dmp.diff_linesToChars(lines, "")
         );
     });
 
@@ -171,7 +171,7 @@ describe("diff-match-patch-ts - core/DiffMatchPatch", () =>
             [DiffOperation.DIFF_EQUAL, "\x01\x02\x01"],
             [DiffOperation.DIFF_INSERT, "\x02\x01\x02"]
         ];
-        dmp["diff_charsToLines_"](diffs, ["", "alpha\n", "beta\n"]);
+        dmp.diff_charsToLines(diffs, ["", "alpha\n", "beta\n"]);
         expect([
             [DiffOperation.DIFF_EQUAL, "alpha\nbeta\nalpha\n"],
             [DiffOperation.DIFF_INSERT, "beta\nalpha\nbeta\n"]
@@ -192,7 +192,7 @@ describe("diff-match-patch-ts - core/DiffMatchPatch", () =>
         expect(chars.length).toBe(n);
         lineList.unshift("");
         diffs = [[DiffOperation.DIFF_DELETE, chars]];
-        dmp["diff_charsToLines_"](diffs, lineList);
+        dmp.diff_charsToLines(diffs, lineList);
         expect([[DiffOperation.DIFF_DELETE, lines]]).toStrictEqual(diffs);
 
         // More than 65536 to verify any 16-bit limitation.
@@ -202,9 +202,9 @@ describe("diff-match-patch-ts - core/DiffMatchPatch", () =>
             lineList[i] = i + "\n";
         }
         chars = lineList.join("");
-        const results = dmp["diff_linesToChars_"](chars, "");
+        const results = dmp.diff_linesToChars(chars, "");
         diffs = [[DiffOperation.DIFF_INSERT, results.chars1]];
-        dmp["diff_charsToLines_"](diffs, results.lineArray);
+        dmp.diff_charsToLines(diffs, results.lineArray);
         expect(diffs[0][1]).toEqual(chars);
     });
 
@@ -529,7 +529,7 @@ describe("diff-match-patch-ts - core/DiffMatchPatch", () =>
             dmp.diff_fromDelta(text1 + "x", delta);
             fail("Should generates error (19 != 20)");
         }
-        catch (e)
+        catch (e: any)
         {
             // Exception expected.
             expect(e.message).toEqual("Delta length (19) does not equal source text length (20)");
@@ -541,7 +541,7 @@ describe("diff-match-patch-ts - core/DiffMatchPatch", () =>
             dmp.diff_fromDelta(text1.substring(1), delta);
             fail("Should generates error (19 != 18)");
         }
-        catch (e)
+        catch (e: any)
         {
             // Exception expected.
             expect(e.message).toEqual("Delta length (19) does not equal source text length (18)");
@@ -553,7 +553,7 @@ describe("diff-match-patch-ts - core/DiffMatchPatch", () =>
             dmp.diff_fromDelta("", "+%c3%xy");
             fail("Should generates error (%c3%xy invalid Unicode)");
         }
-        catch (e)
+        catch (e: any)
         {
             // Exception expected.
             expect(e.message).toEqual("Illegal escape in diff_fromDelta: %c3%xy");
@@ -732,7 +732,7 @@ describe("diff-match-patch-ts - core/DiffMatchPatch", () =>
         ]).toStrictEqual(dmp.diff_main("a [[Pennsylvania]] and [[New", " and [[Pennsylvania]]", false));
 
         // Timeout.
-        dmp.diffTimeout = 0.1;  // 100ms
+        dmp.diffTimeout = 0.1; // 100ms
         let a = "`Twas brillig, and the slithy toves\nDid gyre and gimble in the wabe:\nAll mimsy were the borogoves"
             + ",\nAnd the mome raths outgrabe.\n";
         let b = "I am the very model of a modern major general,\nI've information vegetable, animal"
@@ -799,7 +799,7 @@ describe("diff-match-patch-ts - core/DiffMatchPatch", () =>
             dmp.diff_main(null as any, null as any);
             fail("Should generates error of null inputs");
         }
-        catch (e)
+        catch (e: any)
         {
             // Exception expected.
             expect(e.message).toEqual("Null input. (diff_main)");
@@ -856,12 +856,12 @@ describe("diff-match-patch-ts - core/DiffMatchPatch", () =>
         expect(8).toEqual(dmp["match_bitap_"]("abcdexyzabcde", "abccde", 5));
 
         // Distance test.
-        dmp.matchDistance = 10;  // Strict location.
+        dmp.matchDistance = 10; // Strict location.
         expect(-1).toEqual(dmp["match_bitap_"]("abcdefghijklmnopqrstuvwxyz", "abcdefg", 24));
 
         expect(0).toEqual(dmp["match_bitap_"]("abcdefghijklmnopqrstuvwxyz", "abcdxxefg", 1));
 
-        dmp.matchDistance = 1000;  // Loose location.
+        dmp.matchDistance = 1000; // Loose location.
         expect(0).toEqual(dmp["match_bitap_"]("abcdefghijklmnopqrstuvwxyz", "abcdefg", 24));
     });
 
@@ -892,7 +892,7 @@ describe("diff-match-patch-ts - core/DiffMatchPatch", () =>
             dmp.match_main(null as any, null as any, 0);
             fail("Should generates error of null inputs");
         }
-        catch (e)
+        catch (e: any)
         {
             // Exception expected.
             expect(e.message).toEqual("Null input. (match_main)");
@@ -920,7 +920,7 @@ describe("diff-match-patch-ts - core/DiffMatchPatch", () =>
             dmp.patch_fromText("Bad\nPatch\n");
             fail("Should generates error");
         }
-        catch (e)
+        catch (e: any)
         {
             // Exception expected.
             expect(e.message).toEqual("Invalid patch string: Bad");
@@ -1018,7 +1018,7 @@ describe("diff-match-patch-ts - core/DiffMatchPatch", () =>
             dmp.patch_make(null as any);
             fail("Should generates error of null inputs");
         }
-        catch (e)
+        catch (e: any)
         {
             // Exception expected.
             expect(e.message).toEqual("Unknown call format to patch_make");

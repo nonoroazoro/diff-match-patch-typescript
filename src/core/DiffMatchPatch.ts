@@ -945,7 +945,7 @@ export class DiffMatchPatch
                     {
                         diffs[diffsLength++] = [DiffOperation.DIFF_INSERT, decodeURI(param)];
                     }
-                    catch (ex)
+                    catch
                     {
                         // Malformed URI sequence.
                         throw new Error("Illegal escape in diff_fromDelta: " + param);
@@ -988,6 +988,53 @@ export class DiffMatchPatch
             );
         }
         return diffs;
+    }
+
+    /**
+     * Split two texts into an array of strings. Reduce the texts to a string of
+     * hashes where each Unicode character represents one line.
+     *
+     * @param {string} text1 First string.
+     * @param {string} text2 Second string.
+     * @returns {{chars1: string, chars2: string, lineArray: string[]}}
+     * An object containing the encoded text1, the encoded text2 and
+     * the array of unique strings.
+     * The zeroth element of the array of unique strings is intentionally blank.
+     */
+    public diff_linesToChars(text1: string, text2: string): { chars1: string; chars2: string; lineArray: string[] }
+    {
+        const lineArray: string[] = []; // e.g. lineArray[4] == 'Hello\n'
+        const lineHash: Record<string, number> = {}; // e.g. lineHash['Hello\n'] == 4
+
+        // '\x00' is a valid character, but various debuggers don't like it.
+        // So we'll insert a junk entry to avoid generating a null character.
+        lineArray[0] = "";
+
+        // Allocate 2/3rds of the space for text1, the rest for text2.
+        const chars1 = this.diff_linesToCharsMunge_(text1, lineArray, lineHash, 40000);
+        const chars2 = this.diff_linesToCharsMunge_(text2, lineArray, lineHash, 65535);
+        return { chars1, chars2, lineArray };
+    }
+
+    /**
+     * Rehydrate the text in a diff from a string of line hashes to real lines of
+     * text.
+     *
+     * @param {Diff[]} diffs Array of diff tuples.
+     * @param {string[]} lineArray Array of unique strings.
+     */
+    public diff_charsToLines(diffs: Diff[], lineArray: string[])
+    {
+        for (let i = 0; i < diffs.length; i++)
+        {
+            const chars = diffs[i][1];
+            const text = [];
+            for (let j = 0; j < chars.length; j++)
+            {
+                text[j] = lineArray[chars.charCodeAt(j)];
+            }
+            diffs[i][1] = text.join("");
+        }
     }
     //#endregion DIFF FUNCTIONS (public)
 
@@ -1637,7 +1684,7 @@ export class DiffMatchPatch
                 {
                     line = decodeURI(rawLine);
                 }
-                catch (ex)
+                catch
                 {
                     // Malformed URI sequence.
                     throw new Error("Illegal escape in patch_fromText: " + rawLine);
@@ -1777,7 +1824,7 @@ export class DiffMatchPatch
     private diff_lineMode_(text1: string, text2: string, deadline: number): Diff[]
     {
         // Scan the text on a line-by-line basis first.
-        const a = this.diff_linesToChars_(text1, text2);
+        const a = this.diff_linesToChars(text1, text2);
         text1 = a.chars1;
         text2 = a.chars2;
         const linearray = a.lineArray;
@@ -1785,7 +1832,7 @@ export class DiffMatchPatch
         const diffs = this.diff_main(text1, text2, false, deadline);
 
         // Convert the diff back to original text.
-        this.diff_charsToLines_(diffs, linearray);
+        this.diff_charsToLines(diffs, linearray);
         // Eliminate freak matches (e.g. blank lines)
         this.diff_cleanupSemantic(diffs);
 
@@ -2029,33 +2076,6 @@ export class DiffMatchPatch
     }
 
     /**
-     * Split two texts into an array of strings. Reduce the texts to a string of
-     * hashes where each Unicode character represents one line.
-     *
-     * @private
-     * @param {string} text1 First string.
-     * @param {string} text2 Second string.
-     * @returns {{chars1: string, chars2: string, lineArray: string[]}}
-     * An object containing the encoded text1, the encoded text2 and
-     * the array of unique strings.
-     * The zeroth element of the array of unique strings is intentionally blank.
-     */
-    private diff_linesToChars_(text1: string, text2: string): { chars1: string; chars2: string; lineArray: string[] }
-    {
-        const lineArray: string[] = []; // e.g. lineArray[4] == 'Hello\n'
-        const lineHash: Record<string, number> = {}; // e.g. lineHash['Hello\n'] == 4
-
-        // '\x00' is a valid character, but various debuggers don't like it.
-        // So we'll insert a junk entry to avoid generating a null character.
-        lineArray[0] = "";
-
-        // Allocate 2/3rds of the space for text1, the rest for text2.
-        const chars1 = this.diff_linesToCharsMunge_(text1, lineArray, lineHash, 40000);
-        const chars2 = this.diff_linesToCharsMunge_(text2, lineArray, lineHash, 65535);
-        return { chars1, chars2, lineArray };
-    }
-
-    /**
      * Split a text into an array of strings. Reduce the texts to a string of
      * hashes where each Unicode character represents one line.
      * Modifies linearray and linehash through being a closure.
@@ -2113,28 +2133,6 @@ export class DiffMatchPatch
             lineStart = lineEnd + 1;
         }
         return chars;
-    }
-
-    /**
-     * Rehydrate the text in a diff from a string of line hashes to real lines of
-     * text.
-     *
-     * @private
-     * @param {Diff[]} diffs Array of diff tuples.
-     * @param {string[]} lineArray Array of unique strings.
-     */
-    private diff_charsToLines_(diffs: Diff[], lineArray: string[])
-    {
-        for (let i = 0; i < diffs.length; i++)
-        {
-            const chars = diffs[i][1];
-            const text = [];
-            for (let j = 0; j < chars.length; j++)
-            {
-                text[j] = lineArray[chars.charCodeAt(j)];
-            }
-            diffs[i][1] = text.join("");
-        }
     }
 
     /**
