@@ -2208,10 +2208,10 @@ escodegen@^1.14.1:
   optionalDependencies:
     source-map "~0.6.1"
 
-eslint-config-zoro@^3.2.0:
-  version "3.2.0"
-  resolved "https://registry.yarnpkg.com/eslint-config-zoro/-/eslint-config-zoro-3.2.0.tgz#18aa4e50078e593ca723a753ac07c1c94be393d0"
-  integrity sha512-H/W4EZcw4I1Y03c6ZjBd6fp3jBBVvM60QaXwIuE3xVZbIUvVwNPLchwJbl6yaPB6Rg8Otx20PsvNllHMrZie1A==
+eslint-config-zoro@^4.0.0:
+  version "4.0.0"
+  resolved "https://registry.yarnpkg.com/eslint-config-zoro/-/eslint-config-zoro-4.0.0.tgz#78496fe5a05cb0b7c39f4336621459f352d07149"
+  integrity sha512-RbX1FWMPTWqG2f8WsGGGt4rpE4lhqu594GYrU0UF1yhy4QglUk6Bjmld4xydJekgxFSg8nTRXbxCTQ6BwkzmFg==
 
 eslint-loader@^4.0.2:
   version "4.0.2"
