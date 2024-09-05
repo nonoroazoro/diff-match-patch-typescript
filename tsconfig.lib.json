@@ -1,8 +1,9 @@
 {
     "extends": "./tsconfig.json",
     "compilerOptions": {
-        "module": "commonjs",
+        "module": "CommonJS",
         "outDir": "dist/lib",
-        "declaration": false
-    }
+        "isolatedModules": true,
+        "verbatimModuleSyntax": false
+    },
 }

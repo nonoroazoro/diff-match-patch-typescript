@@ -1,4 +1,5 @@
-import { Diff, DiffOperation } from "../types";
+import { DiffOperation } from "../types";
+import type { Diff } from "../types";
 
 /**
  * Class representing one patch operation.

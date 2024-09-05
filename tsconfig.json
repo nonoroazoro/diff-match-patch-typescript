@@ -1,27 +1,23 @@
 {
     "compilerOptions": {
-        "outDir": "dist",
         "rootDir": "src",
-        "module": "es6",
-        "target": "es5",
-        "downlevelIteration": true,
-        "moduleResolution": "node",
+        "module": "ESNext",
+        "target": "ESNext",
+        "moduleResolution": "Node",
         "allowUnreachableCode": true,
-        "declaration": true,
-        "experimentalDecorators": true,
         "noImplicitAny": true,
+        "noImplicitOverride": true,
         "noImplicitReturns": true,
         "noImplicitThis": true,
         "noUnusedLocals": false,
         "noUnusedParameters": true,
-        "pretty": true,
+        "removeComments": true,
         "skipLibCheck": true,
         "sourceMap": false,
         "strictNullChecks": true,
-        "suppressImplicitAnyIndexErrors": true,
+        "verbatimModuleSyntax": true,
         "lib": [
-            "es5",
-            "es6"
+            "ESNext"
         ]
     },
     "include": [
