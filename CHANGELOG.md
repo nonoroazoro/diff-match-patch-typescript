@@ -1,5 +1,10 @@
 # Changelogs
 
+## 1.1.2 - August 26, 2025
+
+- Changed: Tweak readme.
+
+
 ## 1.1.1 - August 26, 2025
 
 - Changed: Upgrade packages.
