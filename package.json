@@ -30,19 +30,19 @@
         "upgradepackages": "./scripts/upgrade_packages.sh"
     },
     "devDependencies": {
-        "@types/jest": "^29.5.12",
-        "@types/node": "^22.5.4",
-        "@typescript-eslint/eslint-plugin": "^8.4.0",
-        "@typescript-eslint/parser": "^8.4.0",
-        "eslint": "^9.9.1",
-        "eslint-config-zoro": "^6.1.0",
-        "husky": "^9.1.5",
-        "jest": "^29.7.0",
-        "lint-staged": "^15.2.10",
+        "@types/jest": "^30.0.0",
+        "@types/node": "^24.3.0",
+        "@typescript-eslint/eslint-plugin": "^8.41.0",
+        "@typescript-eslint/parser": "^8.41.0",
+        "eslint": "^9.34.0",
+        "eslint-config-zoro": "^7.1.9",
+        "husky": "^9.1.7",
+        "jest": "^30.0.5",
+        "lint-staged": "^16.1.5",
         "rimraf": "^6.0.1",
-        "ts-jest": "^29.2.5",
-        "ts-loader": "^9.5.1",
-        "typescript": "^5.5.4"
+        "ts-jest": "^29.4.1",
+        "ts-loader": "^9.5.4",
+        "typescript": "^5.9.2"
     },
     "files": [
         "dist"
