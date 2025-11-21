@@ -24,7 +24,7 @@
         "typescript"
     ],
     "scripts": {
-        "clean": "rimraf dist/*",
+        "clean": "rimraf dist",
         "cleanCov": "rimraf @coverage",
         "prebuild": "npm run clean && npm run cleanCov",
         "build": "npm run build:es && npm run build:lib && npm run build:types",
