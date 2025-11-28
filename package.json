@@ -32,8 +32,8 @@
         "build:lib": "tsc --project ./tsconfig.lib.json",
         "build:types": "tsc --project ./tsconfig.types.json",
         "lint": "eslint src/**",
-        "test": "jest --config ./scripts/jest/jest.config.js",
-        "test:watch": "jest --config ./scripts/jest/jest.config.js --watch --verbose false",
+        "test": "jest --config ./scripts/jest.config.js",
+        "test:watch": "jest --config ./scripts/jest.config.js --watch --verbose false",
         "test:cov": "npm run cleanCov && npm test -- --coverage",
         "upgradepackages": "./scripts/upgrade_packages.sh"
     },
