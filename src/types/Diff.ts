@@ -1,4 +1,4 @@
-import { DiffOperation } from "./DiffOperation";
+import type { DiffOperation } from "./DiffOperation";
 
 /**
  * Represents one diff tuple, in the form of `[op, text]`.

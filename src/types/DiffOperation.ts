@@ -10,6 +10,6 @@
 export enum DiffOperation
 {
     DIFF_DELETE = -1,
-    DIFF_INSERT = 1,
-    DIFF_EQUAL = 0
+    DIFF_EQUAL = 0,
+    DIFF_INSERT = 1
 }
