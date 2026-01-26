@@ -1,5 +1,5 @@
 <h1 align="center">diff-match-patch-typescript</h1>
-<p align="center"><b>TypeScript</b> port of <a href="https://github.com/google/diff-match-patch">diff-match-patch</a>.</p>
+<p align="center"><b>TypeScript</b> port of <a href="https://github.com/google/diff-match-patch">google/diff-match-patch</a>.</p>
 <p align="center">
     <a href="https://github.com/nonoroazoro/diff-match-patch-typescript/actions/workflows/ci.yml">
         <img src="https://github.com/nonoroazoro/diff-match-patch-typescript/actions/workflows/ci.yml/badge.svg" alt="GitHub CI" />
