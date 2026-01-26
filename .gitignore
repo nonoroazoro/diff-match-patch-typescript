@@ -6,5 +6,5 @@ node_modules
 
 # Project specific stuff
 .cache-loader
-@coverage
+coverage
 dist
