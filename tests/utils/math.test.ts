@@ -1,3 +1,5 @@
+import { describe, expect, it } from "vitest";
+
 import { math } from "../../src/utils";
 
 describe("diff-match-patch-ts - utils/math", () =>

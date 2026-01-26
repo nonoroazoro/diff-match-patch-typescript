@@ -18,6 +18,8 @@
  * Ported by [xiaochao.k@gmail.com](https://github.com/nonoroazoro)
  */
 
+import { describe, expect, it } from "vitest";
+
 import { PatchObject } from "../../src/core";
 import { DiffOperation } from "../../src/types";
 

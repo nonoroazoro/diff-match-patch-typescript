@@ -24,33 +24,38 @@
         "typescript"
     ],
     "scripts": {
-        "clean": "rimraf dist",
-        "cleanCov": "rimraf @coverage",
-        "prebuild": "npm run clean && npm run cleanCov",
+        "prepare": "husky",
+        "prepublish": "npm run build",
+        "prebuild": "npm run test && rimraf dist coverage",
         "build": "npm run build:es && npm run build:lib && npm run build:types",
         "build:es": "tsc --project ./tsconfig.es.json",
         "build:lib": "tsc --project ./tsconfig.lib.json",
         "build:types": "tsc --project ./tsconfig.types.json",
         "lint": "eslint src/**",
-        "test": "jest --config ./scripts/jest.config.js",
-        "test:watch": "jest --config ./scripts/jest.config.js --watch --verbose false",
-        "test:cov": "npm run cleanCov && npm test -- --coverage",
-        "upgradepackages": "./scripts/upgrade_packages.sh"
+        "test": "vitest run",
+        "test:watch": "vitest",
+        "test:cov": "vitest run --coverage",
+        "upgradepackages": "ncu -u"
+    },
+    "lint-staged": {
+        "{src,tests}/**/*.{js,ts}": [
+            "eslint"
+        ]
     },
     "devDependencies": {
-        "@types/jest": "^30.0.0",
-        "@types/node": "^24.3.0",
-        "@typescript-eslint/eslint-plugin": "^8.41.0",
-        "@typescript-eslint/parser": "^8.41.0",
-        "eslint": "^9.34.0",
-        "eslint-config-zoro": "^7.1.9",
+        "@types/node": "^25.0.10",
+        "@vitest/coverage-v8": "^4.0.18",
+        "@typescript-eslint/eslint-plugin": "^8.53.1",
+        "@typescript-eslint/parser": "^8.53.1",
+        "eslint": "^9.39.2",
+        "eslint-config-zoro": "^9.0.6",
         "husky": "^9.1.7",
-        "jest": "^30.0.5",
-        "lint-staged": "^16.1.5",
-        "rimraf": "^6.0.1",
-        "ts-jest": "^29.4.1",
+        "lint-staged": "^16.2.7",
+        "npm-check-updates": "^19.3.1",
+        "rimraf": "^6.1.2",
         "ts-loader": "^9.5.4",
-        "typescript": "^5.9.2"
+        "typescript": "^5.9.3",
+        "vitest": "^4.0.18"
     },
     "files": [
         "dist"

@@ -18,8 +18,12 @@
  * Ported by [xiaochao.k@gmail.com](https://github.com/nonoroazoro)
  */
 
+import { assert, beforeAll, describe, expect, it } from "vitest";
+
 import { DiffMatchPatch } from "../../src/core";
-import { Diff, DiffOperation } from "../../src/types";
+import { DiffOperation } from "../../src/types";
+
+import type { Diff } from "../../src/types";
 
 let dmp: DiffMatchPatch;
 describe("diff-match-patch-ts - core/DiffMatchPatch", () =>
@@ -121,7 +125,14 @@ describe("diff-match-patch-ts - core/DiffMatchPatch", () =>
 
     it("DIFF - Lines To Chars", () =>
     {
-        function expectEqual(a: any, b: any)
+        interface LinesToCharsResult
+        {
+            chars1: string;
+            chars2: string;
+            lineArray: string[];
+        }
+
+        function expectEqual(a: LinesToCharsResult, b: LinesToCharsResult)
         {
             expect(a.chars1).toEqual(b.chars1);
             expect(a.chars2).toEqual(b.chars2);
@@ -150,7 +161,7 @@ describe("diff-match-patch-ts - core/DiffMatchPatch", () =>
         const charList = [];
         for (let i = 1; i < n + 1; i++)
         {
-            lineList[i - 1] = i + "\n";
+            lineList[i - 1] = `${i}\n`;
             charList[i - 1] = String.fromCharCode(i);
         }
         expect(lineList.length).toBe(n);
@@ -183,7 +194,7 @@ describe("diff-match-patch-ts - core/DiffMatchPatch", () =>
         const charList = [];
         for (let i = 1; i < n + 1; i++)
         {
-            lineList[i - 1] = i + "\n";
+            lineList[i - 1] = `${i}\n`;
             charList[i - 1] = String.fromCharCode(i);
         }
         expect(lineList.length).toBe(n);
@@ -199,7 +210,7 @@ describe("diff-match-patch-ts - core/DiffMatchPatch", () =>
         lineList = [];
         for (let i = 0; i < 66000; i++)
         {
-            lineList[i] = i + "\n";
+            lineList[i] = `${i}\n`;
         }
         chars = lineList.join("");
         const results = dmp.diff_linesToChars(chars, "");
@@ -526,37 +537,37 @@ describe("diff-match-patch-ts - core/DiffMatchPatch", () =>
         // Generates error (19 != 20).
         try
         {
-            dmp.diff_fromDelta(text1 + "x", delta);
-            fail("Should generates error (19 != 20)");
+            dmp.diff_fromDelta(`${text1}x`, delta);
+            assert.fail("Should generates error (19 != 20)");
         }
-        catch (e: any)
+        catch (e: unknown)
         {
             // Exception expected.
-            expect(e.message).toEqual("Delta length (19) does not equal source text length (20)");
+            expect(e instanceof Error && e.message).toEqual("Delta length (19) does not equal source text length (20)");
         }
 
         // Generates error (19 != 18).
         try
         {
             dmp.diff_fromDelta(text1.substring(1), delta);
-            fail("Should generates error (19 != 18)");
+            assert.fail("Should generates error (19 != 18)");
         }
-        catch (e: any)
+        catch (e: unknown)
         {
             // Exception expected.
-            expect(e.message).toEqual("Delta length (19) does not equal source text length (18)");
+            expect(e instanceof Error && e.message).toEqual("Delta length (19) does not equal source text length (18)");
         }
 
         // Generates error (%c3%xy invalid Unicode).
         try
         {
             dmp.diff_fromDelta("", "+%c3%xy");
-            fail("Should generates error (%c3%xy invalid Unicode)");
+            assert.fail("Should generates error (%c3%xy invalid Unicode)");
         }
-        catch (e: any)
+        catch (e: unknown)
         {
             // Exception expected.
-            expect(e.message).toEqual("Illegal escape in diff_fromDelta: %c3%xy");
+            expect(e instanceof Error && e.message).toEqual("Illegal escape in diff_fromDelta: %c3%xy");
         }
 
         // Test deltas with special characters.
@@ -589,7 +600,7 @@ describe("diff-match-patch-ts - core/DiffMatchPatch", () =>
         }
         diffs = [[DiffOperation.DIFF_INSERT, a]];
         delta = dmp.diff_toDelta(diffs);
-        expect("+" + a).toEqual(delta);
+        expect(`+${a}`).toEqual(delta);
 
         // Convert delta string into a diff.
         expect(dmp.diff_fromDelta("", delta)).toStrictEqual(diffs);
@@ -796,13 +807,13 @@ describe("diff-match-patch-ts - core/DiffMatchPatch", () =>
         // Test null inputs.
         try
         {
-            dmp.diff_main(null as any, null as any);
-            fail("Should generates error of null inputs");
+            dmp.diff_main(null as unknown as string, null as unknown as string);
+            assert.fail("Should generates error of null inputs");
         }
-        catch (e: any)
+        catch (e: unknown)
         {
             // Exception expected.
-            expect(e.message).toEqual("Null input. (diff_main)");
+            expect(e instanceof Error && e.message).toEqual("Null input. (diff_main)");
         }
     });
     //#endregion DIFF TEST FUNCTIONS
@@ -889,13 +900,13 @@ describe("diff-match-patch-ts - core/DiffMatchPatch", () =>
         // Test null inputs.
         try
         {
-            dmp.match_main(null as any, null as any, 0);
-            fail("Should generates error of null inputs");
+            dmp.match_main(null as unknown as string, null as unknown as string, 0);
+            assert.fail("Should generates error of null inputs");
         }
-        catch (e: any)
+        catch (e: unknown)
         {
             // Exception expected.
-            expect(e.message).toEqual("Null input. (match_main)");
+            expect(e instanceof Error && e.message).toEqual("Null input. (match_main)");
         }
     });
     //#endregion MATCH TEST FUNCTIONS
@@ -903,7 +914,7 @@ describe("diff-match-patch-ts - core/DiffMatchPatch", () =>
     //#region PATCH TEST FUNCTIONS
     it("PATCH - From Text", () =>
     {
-        expect([]).toStrictEqual(dmp.patch_fromText(null as any));
+        expect([]).toStrictEqual(dmp.patch_fromText(null as unknown as string));
 
         const strp = "@@ -21,18 +22,17 @@\n jump\n-s\n+ed\n  over \n-the\n+a\n %0Alaz\n";
         expect(strp).toEqual(dmp.patch_fromText(strp)[0].toString());
@@ -918,12 +929,12 @@ describe("diff-match-patch-ts - core/DiffMatchPatch", () =>
         try
         {
             dmp.patch_fromText("Bad\nPatch\n");
-            fail("Should generates error");
+            assert.fail("Should generates error");
         }
-        catch (e: any)
+        catch (e: unknown)
         {
             // Exception expected.
-            expect(e.message).toEqual("Invalid patch string: Bad");
+            expect(e instanceof Error && e.message).toEqual("Invalid patch string: Bad");
         }
     });
 
@@ -1007,7 +1018,7 @@ describe("diff-match-patch-ts - core/DiffMatchPatch", () =>
         {
             text1 += "abcdef";
         }
-        text2 = text1 + "123";
+        text2 = `${text1}123`;
         expectedPatch = "@@ -573,28 +573,31 @@\n cdefabcdefabcdefabcdefabcdef\n+123\n";
         patches = dmp.patch_make(text1, text2);
         expect(expectedPatch).toEqual(dmp.patch_toText(patches));
@@ -1015,13 +1026,13 @@ describe("diff-match-patch-ts - core/DiffMatchPatch", () =>
         // Test null inputs.
         try
         {
-            dmp.patch_make(null as any);
-            fail("Should generates error of null inputs");
+            dmp.patch_make(null as unknown as string);
+            assert.fail("Should generates error of null inputs");
         }
-        catch (e: any)
+        catch (e: unknown)
         {
             // Exception expected.
-            expect(e.message).toEqual("Unknown call format to patch_make");
+            expect(e instanceof Error && e.message).toEqual("Unknown call format to patch_make");
         }
     });
 
